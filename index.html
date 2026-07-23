@@ -238,6 +238,7 @@
     flex:1;
     min-height:0;
     position:relative;
+    overflow:hidden;
   }
   .agenda-page{
     position:absolute;
@@ -268,8 +269,10 @@
   .agenda-page li:last-child{ border-bottom:none; }
   .agenda-item-head{
     display:flex;
-    align-items:baseline;
-    gap:clamp(8px,0.9vw,14px);
+    align-items:center;
+    flex-wrap:wrap;
+    row-gap:4px;
+    gap:clamp(6px,0.7vw,12px);
   }
   .a-date{
     font-family:var(--font-display);
@@ -303,6 +306,10 @@
     font-weight:600;
     color:var(--paper);
     line-height:1.3;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
   }
   .a-processo{
     color:var(--muted);
@@ -313,10 +320,31 @@
     white-space:nowrap;
   }
   .a-resp{
-    color:var(--muted);
     font-size:clamp(11px,0.8vw,13px);
-    font-style:italic;
+    font-weight:700;
+    color:var(--silver);
   }
+  .a-resp::before{
+    content:"Responsável ";
+    font-weight:400;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    font-size:0.85em;
+    color:var(--muted);
+  }
+  .etq{
+    font-size:clamp(9px,0.68vw,11px);
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    font-weight:700;
+    padding:1px 6px;
+    color:#fff;
+    white-space:nowrap;
+  }
+  .etq-fatal{ background:#b8362e; }
+  .etq-interno{ background:#2f8f5b; }
+  .etq-condominio{ background:#1f3d73; }
+  .etq-outro{ background:rgba(169,173,178,0.3); color:var(--paper); }
 
   .empty-hint{
     color:var(--muted);
@@ -492,7 +520,7 @@ const CONFIG = {
   newsRssUrl: "https://www.conjur.com.br/rss.xml", // feed RSS de notícias
   noticesCsvUrl: "", // link CSV publicado da planilha de "Avisos internos" (colunas: titulo,mensagem) — usado só no comunicado em tela cheia
   agendaCsvUrl: "https://docs.google.com/spreadsheets/d/1w8D2FxR7vJu-AouPmxfdAf9v1O2aki7szMtkEOk25_0/export?format=csv",  // planilha "Painel TV - Agenda (fonte)" (colunas: Data, Hora, Tipo, Responsável, Título, Título do processo/caso/atendimento, Etiquetas, Status)
-  agendaPageSize: 6,     // quantos prazos aparecem por vez na lateral
+  agendaPageSize: 5,     // quantos prazos aparecem por vez na lateral
   agendaRotateSeconds: 9, // troca de página da agenda
   weatherLat: -18.9186,  // latitude da cidade (Uberlândia/MG)
   weatherLon: -48.2772,  // longitude da cidade (Uberlândia/MG)
@@ -524,8 +552,8 @@ const SAMPLE_NOTICES = [
 ];
 
 const SAMPLE_AGENDA = [
-  { date:"24/07/2026", hora:"-", tipo:"Prazo", titulo:"Preencha CONFIG.agendaCsvUrl", processo:"Configure o link CSV da planilha de agenda", responsavel:"", fatal:false },
-  { date:"29/07/2026", hora:"14:00", tipo:"Audiência", titulo:"Exemplo de audiência", processo:"Caso Exemplo x Réu Exemplo", responsavel:"Fulano de Tal", fatal:true },
+  { date:"24/07/2026", hora:"-", tipo:"Prazo", titulo:"Preencha CONFIG.agendaCsvUrl", processo:"Configure o link CSV da planilha de agenda", responsavel:"", fatal:false, badges:[{label:"PRAZO INTERNO", cls:"etq-interno"}] },
+  { date:"29/07/2026", hora:"14:00", tipo:"Audiência", titulo:"Exemplo de audiência", processo:"Caso Exemplo x Réu Exemplo", responsavel:"Fulano de Tal", fatal:true, badges:[{label:"PRAZO FATAL", cls:"etq-fatal"}] },
 ];
 
 function withTimeout(promise, ms){
@@ -685,6 +713,20 @@ function parseDateBR(d){
   return new Date(+m[3], +m[2] - 1, +m[1]).getTime();
 }
 
+function etiquetaBadges(str){
+  return (str || "")
+    .split(",")
+    .map(s => s.trim())
+    .filter(Boolean)
+    .map(label => {
+      let cls = "etq-outro";
+      if(/fatal/i.test(label)) cls = "etq-fatal";
+      else if(/interno/i.test(label)) cls = "etq-interno";
+      else if(/condom/i.test(label)) cls = "etq-condominio";
+      return { label, cls };
+    });
+}
+
 let agendaItems = SAMPLE_AGENDA;
 let agendaPageIndex = 0;
 let agendaRotateTimer = null;
@@ -707,6 +749,7 @@ async function loadAgenda(){
             processo: r["título do processo/caso/atendimento"] || r["titulo do processo/caso/atendimento"] || "",
             responsavel: r["responsável"] || r["responsavel"] || "",
             fatal: /fatal/i.test(r["etiquetas"] || ""),
+            badges: etiquetaBadges(r["etiquetas"] || ""),
           }))
           .sort((a, b) => parseDateBR(a.date) - parseDateBR(b.date));
       }
@@ -743,6 +786,7 @@ function renderAgendaPages(){
         <div class="agenda-item-head">
           <span class="a-date${a.fatal ? " fatal" : ""}">${a.date ? a.date.slice(0, 5) : ""}</span>
           <span class="a-hora">${a.hora && a.hora !== "-" ? a.hora : ""}</span>
+          ${(a.badges || []).map(b => `<span class="etq ${b.cls}">${b.label}</span>`).join("")}
           <span class="a-tipo${a.fatal ? " fatal" : ""}">${a.tipo || "Prazo"}</span>
         </div>
         <span class="a-titulo">${a.titulo}</span>
