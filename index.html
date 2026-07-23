@@ -298,6 +298,12 @@
     padding-bottom:clamp(8px,1vw,14px);
   }
   .agenda-page li:last-child{ border-bottom:none; }
+  .agenda-page li.audiencia{
+    background:rgba(250,204,21,0.12);
+    padding:6px 10px clamp(8px,1vw,14px) 10px;
+    margin:-6px 0 0 0;
+    border-radius:3px;
+  }
   .agenda-item-head{
     display:flex;
     align-items:center;
@@ -982,7 +988,7 @@ function renderAgendaPages(){
     const ul = document.createElement("ul");
     ul.className = "agenda-page" + (i === 0 ? " active" : "");
     ul.innerHTML = page.map(a => `
-      <li>
+      <li class="${/audi/i.test(a.tipo || "") ? "audiencia" : ""}">
         <div class="agenda-item-head">
           <span class="a-date${a.fatal ? " fatal" : ""}">${a.date ? a.date.slice(0, 5) : ""}</span>
           <span class="a-hora">${a.hora && a.hora !== "-" ? a.hora : ""}</span>
