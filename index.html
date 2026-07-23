@@ -1278,7 +1278,7 @@ function updatePrazosTicker(){
     if(!name) return;
     counts[name] = (counts[name] || 0) + 1;
   });
-  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
 
   if(!entries.length){
     track.style.animation = "none";
