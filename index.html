@@ -453,9 +453,13 @@
     color:var(--paper);
     font-variant-numeric:tabular-nums;
   }
-  @keyframes tickerLTR{
-    from{ transform:translateX(-50%); }
-    to{ transform:translateX(0%); }
+  @keyframes tickerRTL{
+    from{ transform:translateX(0%); }
+    to{ transform:translateX(-50%); }
+  }
+  .ticker-name{
+    font-weight:700;
+    color:#fff;
   }
 
   /* ---------- comunicado em tela cheia ---------- */
@@ -1280,7 +1284,7 @@ function updatePrazosTicker(){
   }
 
   const text = entries
-    .map(([name, count]) => `${name} — ${count} ${count === 1 ? "prazo" : "prazos"}`)
+    .map(([name, count]) => `<strong class="ticker-name">${name}</strong> — ${count} ${count === 1 ? "prazo" : "prazos"}`)
     .join("     •     ");
 
   track.innerHTML = `<span class="ticker-copy">${text}</span><span class="ticker-copy">${text}</span>`;
@@ -1290,7 +1294,7 @@ function updatePrazosTicker(){
   const halfWidth = track.scrollWidth / 2;
   const speedPxPerSec = 60;
   const duration = Math.max(15, halfWidth / speedPxPerSec);
-  track.style.animation = `tickerLTR ${duration}s linear infinite`;
+  track.style.animation = `tickerRTL ${duration}s linear infinite`;
 }
 
 function renderAgendaPages(){
