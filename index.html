@@ -787,7 +787,7 @@ const SAMPLE_NEWS = [
 ];
 
 const SAMPLE_NOTICES = [
-  { title:"[EXEMPLO — não é um aviso real]", body:"Preencha CONFIG.noticesCsvUrl com o link CSV da planilha de avisos do escritório." },
+  { title:"Reunião de equipe", body:"Toda segunda-feira às 9h, sala de reuniões." },
 ];
 
 const SAMPLE_AGENDA = [
@@ -1297,10 +1297,9 @@ let comunicadoIndex = 0;
 let comunicadoQueue = [];
 
 function rebuildComunicadoQueue(){
-  // só entram avisos de texto reais (planilha configurada) — nunca os de exemplo
-  const textItems = CONFIG.noticesCsvUrl
-    ? noticesData.filter(n => n.title || n.body).map(n => ({ type: "text", title: n.title, body: n.body }))
-    : [];
+  const textItems = noticesData
+    .filter(n => n.title || n.body)
+    .map(n => ({ type: "text", title: n.title, body: n.body }));
   const imageItems = comunicadoImages.map(url => ({ type: "image", url }));
   const weatherItems = forecastData ? [{ type: "weather" }] : [];
   comunicadoQueue = [...imageItems, ...weatherItems, ...textItems];
