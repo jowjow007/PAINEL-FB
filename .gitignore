@@ -1,0 +1,4 @@
+# Nunca versionar dados reais de clientes/agenda exportados do sistema do escritório
+*.xlsx
+*.csv
+*.b64

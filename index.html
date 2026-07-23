@@ -207,48 +207,89 @@
   }
   .side .panel{flex:1;}
 
-  .notice-list, .agenda-list{
+  .agenda-panel{ position:relative; }
+  .agenda-stage{
+    flex:1;
+    min-height:0;
+    position:relative;
+  }
+  .agenda-page{
+    position:absolute;
+    inset:0;
     list-style:none;
     margin:0;
     padding:0;
-    overflow:hidden;
-    flex:1;
     display:flex;
     flex-direction:column;
     gap:clamp(10px,1.1vw,16px);
+    opacity:0;
+    transform:translateY(8px);
+    transition:opacity 0.6s ease, transform 0.6s ease;
+    pointer-events:none;
   }
-  .notice-list li, .agenda-list li{
+  .agenda-page.active{
+    opacity:1;
+    transform:translateY(0);
+    pointer-events:auto;
+  }
+  .agenda-page li{
+    display:flex;
+    flex-direction:column;
+    gap:3px;
     border-bottom:1px solid var(--line);
     padding-bottom:clamp(8px,1vw,14px);
   }
-  .notice-list li:last-child, .agenda-list li:last-child{
-    border-bottom:none;
-  }
-  .notice-list .n-title{
-    font-size:clamp(14px,1.1vw,18px);
-    font-weight:600;
-    margin-bottom:2px;
-  }
-  .notice-list .n-body{
-    color:var(--muted);
-    font-size:clamp(12px,0.95vw,15px);
-    line-height:1.4;
-  }
-  .agenda-list li{
+  .agenda-page li:last-child{ border-bottom:none; }
+  .agenda-item-head{
     display:flex;
-    gap:clamp(10px,1.1vw,16px);
     align-items:baseline;
+    gap:clamp(8px,0.9vw,14px);
   }
-  .agenda-list .a-date{
+  .a-date{
     font-family:var(--font-display);
     color:var(--red-bright);
     font-variant-numeric:tabular-nums;
     font-size:clamp(15px,1.2vw,20px);
     white-space:nowrap;
   }
-  .agenda-list .a-desc{
-    font-size:clamp(13px,1vw,16px);
+  .a-date.fatal{ color:#ff6a5c; }
+  .a-hora{
+    color:var(--muted);
+    font-size:clamp(11px,0.85vw,14px);
+    font-variant-numeric:tabular-nums;
+    white-space:nowrap;
+  }
+  .a-tipo{
+    font-size:clamp(10px,0.75vw,12px);
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--silver);
+    border:1px solid rgba(169,173,178,0.4);
+    padding:1px 7px;
+    white-space:nowrap;
+  }
+  .a-tipo.fatal{
+    color:#ff8177;
+    border-color:rgba(255,129,119,0.5);
+  }
+  .a-titulo{
+    font-size:clamp(14px,1.1vw,18px);
+    font-weight:600;
     color:var(--paper);
+    line-height:1.3;
+  }
+  .a-processo{
+    color:var(--muted);
+    font-size:clamp(12px,0.9vw,15px);
+    line-height:1.35;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .a-resp{
+    color:var(--muted);
+    font-size:clamp(11px,0.8vw,13px);
+    font-style:italic;
   }
 
   .empty-hint{
@@ -395,7 +436,8 @@
     <aside class="side">
       <section class="panel agenda-panel" aria-label="Agenda e prazos">
         <div class="panel-head"><span class="eyebrow">Agenda &amp; Prazos</span></div>
-        <ul class="agenda-list" id="agendaList"></ul>
+        <div class="agenda-stage" id="agendaStage"></div>
+        <div class="dots" id="agendaDots"></div>
       </section>
     </aside>
   </main>
@@ -423,7 +465,9 @@
 const CONFIG = {
   newsRssUrl: "https://www.conjur.com.br/rss.xml", // feed RSS de notícias
   noticesCsvUrl: "", // link CSV publicado da planilha de "Avisos internos" (colunas: titulo,mensagem) — usado só no comunicado em tela cheia
-  agendaCsvUrl: "",  // link CSV publicado da planilha de "Agenda/Prazos" (colunas: data,descricao)
+  agendaCsvUrl: "",  // link CSV publicado da planilha de "Agenda/Prazos" (colunas: Data, Hora, Tipo, Responsável, Título, Título do processo/caso/atendimento, Etiquetas, Status)
+  agendaPageSize: 6,     // quantos prazos aparecem por vez na lateral
+  agendaRotateSeconds: 9, // troca de página da agenda
   weatherLat: -23.5505,  // latitude da cidade (padrão: São Paulo)
   weatherLon: -46.6333,  // longitude da cidade
   refreshMinutes: 10,    // de quanto em quanto tempo busca dados novos
@@ -454,8 +498,8 @@ const SAMPLE_NOTICES = [
 ];
 
 const SAMPLE_AGENDA = [
-  { date:"24/07", desc:"Preencha CONFIG.agendaCsvUrl com o link CSV da planilha de agenda" },
-  { date:"29/07", desc:"Exemplo de prazo ou audiência" },
+  { date:"24/07/2026", hora:"-", tipo:"Prazo", titulo:"Preencha CONFIG.agendaCsvUrl", processo:"Configure o link CSV da planilha de agenda", responsavel:"", fatal:false },
+  { date:"29/07/2026", hora:"14:00", tipo:"Audiência", titulo:"Exemplo de audiência", processo:"Caso Exemplo x Réu Exemplo", responsavel:"Fulano de Tal", fatal:true },
 ];
 
 function withTimeout(promise, ms){
@@ -587,7 +631,6 @@ async function loadNews(){
 let noticesData = SAMPLE_NOTICES;
 
 async function loadNotices(){
-  const list = document.getElementById("noticeList");
   let items = SAMPLE_NOTICES;
   if(CONFIG.noticesCsvUrl){
     try{
@@ -600,17 +643,20 @@ async function loadNotices(){
     } catch(e){ /* mantém SAMPLE_NOTICES */ }
   }
   noticesData = items;
-  list.innerHTML = items.map(n => `
-    <li>
-      <div class="n-title">${n.title}</div>
-      <div class="n-body">${n.body}</div>
-    </li>
-  `).join("") || `<li class="empty-hint">Nenhum aviso no momento.</li>`;
 }
 
 /* ---------------- agenda / prazos ---------------- */
+function parseDateBR(d){
+  const m = (d || "").match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  if(!m) return Infinity;
+  return new Date(+m[3], +m[2] - 1, +m[1]).getTime();
+}
+
+let agendaItems = SAMPLE_AGENDA;
+let agendaPageIndex = 0;
+let agendaRotateTimer = null;
+
 async function loadAgenda(){
-  const list = document.getElementById("agendaList");
   let items = SAMPLE_AGENDA;
   if(CONFIG.agendaCsvUrl){
     try{
@@ -618,16 +664,81 @@ async function loadAgenda(){
       if(!res.ok) throw new Error("csv http error");
       const rows = parseCsv(await res.text());
       if(rows.length){
-        items = rows.map(r => ({ date: r.data || "", desc: r.descricao || r.descrição || "" }));
+        items = rows
+          .filter(r => !/conclu/i.test(r["status"] || ""))
+          .map(r => ({
+            date: r["data"] || r["agenda data"] || "",
+            hora: r["hora"] || "",
+            tipo: r["tipo"] || "",
+            titulo: r["título"] || r["titulo"] || "",
+            processo: r["título do processo/caso/atendimento"] || r["titulo do processo/caso/atendimento"] || "",
+            responsavel: r["responsável"] || r["responsavel"] || "",
+            fatal: /fatal/i.test(r["etiquetas"] || ""),
+          }))
+          .sort((a, b) => parseDateBR(a.date) - parseDateBR(b.date));
       }
     } catch(e){ /* mantém SAMPLE_AGENDA */ }
   }
-  list.innerHTML = items.map(a => `
-    <li>
-      <span class="a-date">${a.date}</span>
-      <span class="a-desc">${a.desc}</span>
-    </li>
-  `).join("") || `<li class="empty-hint">Nenhum compromisso cadastrado.</li>`;
+  agendaItems = items;
+  renderAgendaPages();
+}
+
+function renderAgendaPages(){
+  const stage = document.getElementById("agendaStage");
+  const dots = document.getElementById("agendaDots");
+  stage.innerHTML = "";
+  dots.innerHTML = "";
+
+  if(agendaRotateTimer){ clearInterval(agendaRotateTimer); agendaRotateTimer = null; }
+
+  if(!agendaItems.length){
+    stage.innerHTML = `<div class="empty-hint">Nenhum compromisso cadastrado.</div>`;
+    return;
+  }
+
+  const pageSize = CONFIG.agendaPageSize;
+  const pages = [];
+  for(let i = 0; i < agendaItems.length; i += pageSize){
+    pages.push(agendaItems.slice(i, i + pageSize));
+  }
+
+  pages.forEach((page, i) => {
+    const ul = document.createElement("ul");
+    ul.className = "agenda-page" + (i === 0 ? " active" : "");
+    ul.innerHTML = page.map(a => `
+      <li>
+        <div class="agenda-item-head">
+          <span class="a-date${a.fatal ? " fatal" : ""}">${a.date ? a.date.slice(0, 5) : ""}</span>
+          <span class="a-hora">${a.hora && a.hora !== "-" ? a.hora : ""}</span>
+          <span class="a-tipo${a.fatal ? " fatal" : ""}">${a.tipo || "Prazo"}</span>
+        </div>
+        <span class="a-titulo">${a.titulo}</span>
+        ${a.processo ? `<span class="a-processo">${a.processo}</span>` : ""}
+        ${a.responsavel ? `<span class="a-resp">${a.responsavel}</span>` : ""}
+      </li>
+    `).join("");
+    stage.appendChild(ul);
+
+    const dot = document.createElement("span");
+    if(i === 0) dot.className = "active";
+    dots.appendChild(dot);
+  });
+
+  agendaPageIndex = 0;
+  if(pages.length > 1){
+    agendaRotateTimer = setInterval(rotateAgendaPage, CONFIG.agendaRotateSeconds * 1000);
+  }
+}
+
+function rotateAgendaPage(){
+  const pageEls = document.querySelectorAll(".agenda-page");
+  const dotEls = document.querySelectorAll("#agendaDots span");
+  if(!pageEls.length) return;
+  pageEls[agendaPageIndex].classList.remove("active");
+  dotEls[agendaPageIndex].classList.remove("active");
+  agendaPageIndex = (agendaPageIndex + 1) % pageEls.length;
+  pageEls[agendaPageIndex].classList.add("active");
+  dotEls[agendaPageIndex].classList.add("active");
 }
 
 /* ---------------- comunicado em tela cheia ---------------- */
