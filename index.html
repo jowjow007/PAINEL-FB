@@ -152,10 +152,7 @@
   .news-slide{
     position:absolute;
     inset:0;
-    display:flex;
-    flex-direction:column;
-    justify-content:center;
-    gap:clamp(10px,1.4vw,20px);
+    overflow:hidden;
     opacity:0;
     transform:translateY(8px);
     transition:opacity 0.6s ease, transform 0.6s ease;
@@ -166,13 +163,40 @@
     transform:translateY(0);
     pointer-events:auto;
   }
+  .news-media{
+    position:absolute;
+    inset:0;
+    background:radial-gradient(circle at 28% 22%, var(--red) 0%, var(--red-deep) 60%, #1c1211 100%);
+  }
+  .news-media img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+  }
+  .news-scrim{
+    position:absolute;
+    inset:0;
+    background:linear-gradient(to top, rgba(10,7,7,0.94) 0%, rgba(10,7,7,0.68) 38%, rgba(10,7,7,0.1) 68%, transparent 100%);
+  }
+  .news-text{
+    position:relative;
+    z-index:1;
+    height:100%;
+    display:flex;
+    flex-direction:column;
+    justify-content:flex-end;
+    gap:clamp(10px,1.4vw,18px);
+    padding:clamp(16px,2vw,32px);
+  }
   .news-slide .tag{
     align-self:flex-start;
     font-size:clamp(11px,0.8vw,13px);
     letter-spacing:0.1em;
     text-transform:uppercase;
-    color:var(--silver);
-    border:1px solid rgba(169,173,178,0.4);
+    color:var(--paper);
+    background:rgba(15,10,10,0.55);
+    border:1px solid rgba(236,230,225,0.3);
     padding:3px 10px;
   }
   .news-slide h2{
@@ -181,10 +205,12 @@
     font-size:clamp(26px,3.4vw,52px);
     line-height:1.15;
     margin:0;
+    color:#fff;
+    text-shadow:0 2px 16px rgba(0,0,0,0.55);
     text-wrap:balance;
   }
   .news-slide .meta{
-    color:var(--muted);
+    color:rgba(236,230,225,0.8);
     font-size:clamp(12px,1vw,16px);
   }
   .dots{
@@ -434,8 +460,8 @@
     </section>
 
     <aside class="side">
-      <section class="panel agenda-panel" aria-label="Agenda e prazos">
-        <div class="panel-head"><span class="eyebrow">Agenda &amp; Prazos</span></div>
+      <section class="panel agenda-panel" aria-label="Prazos e audiências">
+        <div class="panel-head"><span class="eyebrow">Prazos &amp; Audiências</span></div>
         <div class="agenda-stage" id="agendaStage"></div>
         <div class="dots" id="agendaDots"></div>
       </section>
@@ -468,8 +494,8 @@ const CONFIG = {
   agendaCsvUrl: "https://docs.google.com/spreadsheets/d/1w8D2FxR7vJu-AouPmxfdAf9v1O2aki7szMtkEOk25_0/export?format=csv",  // planilha "Painel TV - Agenda (fonte)" (colunas: Data, Hora, Tipo, Responsável, Título, Título do processo/caso/atendimento, Etiquetas, Status)
   agendaPageSize: 6,     // quantos prazos aparecem por vez na lateral
   agendaRotateSeconds: 9, // troca de página da agenda
-  weatherLat: -23.5505,  // latitude da cidade (padrão: São Paulo)
-  weatherLon: -46.6333,  // longitude da cidade
+  weatherLat: -18.9186,  // latitude da cidade (Uberlândia/MG)
+  weatherLon: -48.2772,  // longitude da cidade (Uberlândia/MG)
   refreshMinutes: 10,    // de quanto em quanto tempo busca dados novos
   newsRotateSeconds: 12, // troca de manchete no painel de notícias
   comunicadoIntervalMinutes: 10, // de quanto em quanto tempo o comunicado cobre a tela
@@ -580,9 +606,15 @@ function renderNewsSlides(){
     const slide = document.createElement("div");
     slide.className = "news-slide" + (i === 0 ? " active" : "");
     slide.innerHTML = `
-      <span class="tag">${item.tag || "notícia"}</span>
-      <h2>${item.title}</h2>
-      <span class="meta">${item.source || ""}</span>
+      <div class="news-media">
+        ${item.image ? `<img src="${item.image}" alt="" onerror="this.remove()" />` : ""}
+      </div>
+      <div class="news-scrim"></div>
+      <div class="news-text">
+        <span class="tag">${item.tag || "notícia"}</span>
+        <h2>${item.title}</h2>
+        <span class="meta">${item.source || ""}</span>
+      </div>
     `;
     stage.appendChild(slide);
 
@@ -616,6 +648,7 @@ async function loadNews(){
       title: it.title,
       tag: (data.feed && data.feed.title) || "notícia",
       source: new Date(it.pubDate).toLocaleDateString("pt-BR"),
+      image: it.thumbnail || (it.enclosure && it.enclosure.link) || "",
     }));
     sourceLabel.textContent = (data.feed && data.feed.title) || "";
   } catch(e){
