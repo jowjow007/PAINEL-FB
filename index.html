@@ -459,15 +459,16 @@
   }
   .ticker-name{
     display:inline-block;
-    font-weight:700;
+    font-weight:500;
     text-transform:uppercase;
     letter-spacing:0.03em;
     color:#fff;
     background:rgba(201,70,60,0.2);
     border:1px solid rgba(201,70,60,0.45);
-    padding:1px 9px;
+    padding:2px 10px;
     border-radius:2px;
   }
+  .ticker-name b{ font-weight:800; }
 
   /* ---------- comunicado em tela cheia ---------- */
   .comunicado-overlay{
@@ -1291,7 +1292,7 @@ function updatePrazosTicker(){
   }
 
   const text = entries
-    .map(([name, count]) => `<strong class="ticker-name">${name}</strong> — ${count} ${count === 1 ? "prazo" : "prazos"}`)
+    .map(([name, count]) => `<span class="ticker-name"><b>${name}</b> — ${count} ${count === 1 ? "prazo" : "prazos"}</span>`)
     .join("     •     ");
 
   track.innerHTML = `<span class="ticker-copy">${text}</span><span class="ticker-copy">${text}</span>`;
