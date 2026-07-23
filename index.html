@@ -517,7 +517,11 @@
    CONFIGURAÇÃO — edite estes valores para os dados reais do escritório
    ====================================================================== */
 const CONFIG = {
-  newsRssUrl: "https://www.conjur.com.br/rss.xml", // feed RSS de notícias
+  newsRssUrls: [
+    "https://www.conjur.com.br/rss.xml",
+    "https://res.stj.jus.br/hrestp-c-portalp/RSS.xml",
+    "https://ambitojuridico.com.br/feed/",
+  ], // fontes de notícias (RSS) — todas entram no mesmo carrossel, misturadas por data
   noticesCsvUrl: "", // link CSV publicado da planilha de "Avisos internos" (colunas: titulo,mensagem) — usado só no comunicado em tela cheia
   agendaCsvUrl: "https://docs.google.com/spreadsheets/d/1w8D2FxR7vJu-AouPmxfdAf9v1O2aki7szMtkEOk25_0/export?format=csv",  // planilha "Painel TV - Agenda (fonte)" (colunas: Data, Hora, Tipo, Responsável, Título, Título do processo/caso/atendimento, Etiquetas, Status)
   agendaPageSize: 5,     // quantos prazos aparecem por vez na lateral
@@ -666,22 +670,32 @@ function rotateNews(){
 
 async function loadNews(){
   const sourceLabel = document.getElementById("newsSource");
+  sourceLabel.textContent = "";
   try{
-    const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(CONFIG.newsRssUrl)}`;
-    const res = await withTimeout(fetch(apiUrl), 6000);
-    if(!res.ok) throw new Error("rss http error");
-    const data = await res.json();
-    if(data.status !== "ok" || !data.items || !data.items.length) throw new Error("rss empty");
-    newsItems = data.items.slice(0, 8).map(it => ({
-      title: it.title,
-      tag: (data.feed && data.feed.title) || "notícia",
-      source: new Date(it.pubDate).toLocaleDateString("pt-BR"),
-      image: it.thumbnail || (it.enclosure && it.enclosure.link) || "",
+    const perFeed = await Promise.all(CONFIG.newsRssUrls.map(async (url) => {
+      try{
+        const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`;
+        const res = await withTimeout(fetch(apiUrl), 6000);
+        if(!res.ok) throw new Error("rss http error");
+        const data = await res.json();
+        if(data.status !== "ok" || !data.items || !data.items.length) throw new Error("rss empty");
+        const feedTitle = (data.feed && data.feed.title) || "notícia";
+        return data.items.slice(0, 6).map(it => ({
+          title: it.title,
+          tag: feedTitle,
+          source: new Date(it.pubDate).toLocaleDateString("pt-BR"),
+          image: it.thumbnail || (it.enclosure && it.enclosure.link) || "",
+          pubDate: it.pubDate,
+        }));
+      } catch(e){
+        return [];
+      }
     }));
-    sourceLabel.textContent = (data.feed && data.feed.title) || "";
+    const merged = perFeed.flat().sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+    if(!merged.length) throw new Error("todas as fontes de notícias falharam");
+    newsItems = merged.slice(0, 12);
   } catch(e){
     newsItems = SAMPLE_NEWS;
-    sourceLabel.textContent = "";
   }
   renderNewsSlides();
   if(newsRotateTimer) clearInterval(newsRotateTimer);
@@ -711,6 +725,18 @@ function parseDateBR(d){
   const m = (d || "").match(/(\d{2})\/(\d{2})\/(\d{4})/);
   if(!m) return Infinity;
   return new Date(+m[3], +m[2] - 1, +m[1]).getTime();
+}
+
+function agendaGroup(item){
+  if(/audi/i.test(item.tipo || "")) return 0;
+  const hasFatal = item.badges.some(b => b.cls === "etq-fatal");
+  const hasInterno = item.badges.some(b => b.cls === "etq-interno");
+  const hasCondominio = item.badges.some(b => b.cls === "etq-condominio");
+  if(hasFatal && !hasInterno) return 1;
+  if(hasFatal && hasInterno) return 2;
+  if(hasInterno) return 3;
+  if(hasCondominio) return 4;
+  return 5;
 }
 
 function etiquetaBadges(str){
@@ -751,7 +777,11 @@ async function loadAgenda(){
             fatal: /fatal/i.test(r["etiquetas"] || ""),
             badges: etiquetaBadges(r["etiquetas"] || ""),
           }))
-          .sort((a, b) => parseDateBR(a.date) - parseDateBR(b.date));
+          .sort((a, b) => {
+            const ga = agendaGroup(a), gb = agendaGroup(b);
+            if(ga !== gb) return ga - gb;
+            return parseDateBR(a.date) - parseDateBR(b.date);
+          });
       }
     } catch(e){ /* mantém SAMPLE_AGENDA */ }
   }
