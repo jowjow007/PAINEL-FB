@@ -454,12 +454,18 @@
     font-variant-numeric:tabular-nums;
   }
   @keyframes tickerRTL{
-    from{ transform:translateX(0%); }
-    to{ transform:translateX(-50%); }
+    from{ transform:translateX(-50%); }
+    to{ transform:translateX(0%); }
   }
   .ticker-name{
+    display:inline-block;
     font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:0.03em;
     color:#fff;
+    background:var(--red-bright);
+    padding:1px 9px;
+    border-radius:2px;
   }
 
   /* ---------- comunicado em tela cheia ---------- */
