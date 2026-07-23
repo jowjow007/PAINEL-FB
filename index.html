@@ -663,7 +663,7 @@ async function loadWeather(){
   chip.querySelector(".weather-city").textContent = CONFIG.cityLabel;
   try{
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${CONFIG.weatherLat}&longitude=${CONFIG.weatherLon}&current=temperature_2m,weather_code`;
-    const res = await withTimeout(fetch(url), 5000);
+    const res = await withTimeout(fetch(url), 8000);
     if(!res.ok) throw new Error("weather http error");
     const data = await res.json();
     const temp = Math.round(data.current.temperature_2m);
