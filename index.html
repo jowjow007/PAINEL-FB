@@ -437,14 +437,13 @@
     flex:1;
     min-width:0;
     overflow:hidden;
-    position:relative;
-    height:1.6em;
+    display:flex;
+    align-items:center;
+    padding:3px 0;
   }
   .ticker-track{
-    position:absolute;
-    top:0;
-    left:0;
     display:flex;
+    align-items:center;
     white-space:nowrap;
     width:max-content;
   }
@@ -459,7 +458,7 @@
   }
   .ticker-name{
     display:inline-block;
-    font-weight:500;
+    font-weight:400;
     text-transform:uppercase;
     letter-spacing:0.03em;
     color:#fff;
@@ -468,7 +467,7 @@
     padding:2px 10px;
     border-radius:2px;
   }
-  .ticker-name b{ font-weight:800; }
+  .ticker-name b{ font-weight:700; }
 
   /* ---------- comunicado em tela cheia ---------- */
   .comunicado-overlay{
