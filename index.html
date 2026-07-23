@@ -71,7 +71,7 @@
   .topbar-title{
     justify-self:center;
     font-family:var(--font-display);
-    font-size:clamp(14px,1.3vw,20px);
+    font-size:clamp(28px,2.6vw,40px);
     letter-spacing:0.35em;
     text-transform:uppercase;
     color:var(--muted);
@@ -222,6 +222,17 @@
   .news-slide .meta{
     color:rgba(236,230,225,0.8);
     font-size:clamp(12px,1vw,16px);
+  }
+  .news-slide .lede{
+    margin:0;
+    max-width:64ch;
+    color:rgba(236,230,225,0.88);
+    font-size:clamp(13px,1.05vw,17px);
+    line-height:1.4;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
   }
   .dots{
     display:flex;
@@ -531,8 +542,8 @@ const CONFIG = {
   newsRssUrls: [
     "https://www.conjur.com.br/rss.xml",
     "https://res.stj.jus.br/hrestp-c-portalp/RSS.xml",
-    "https://ambitojuridico.com.br/feed/",
-  ], // fontes de notícias (RSS) — todas entram no mesmo carrossel, misturadas por data
+    "https://www.jota.info/feed",
+  ], // fontes de notícias (RSS) — todas entram no mesmo carrossel, misturadas por data (Âmbito Jurídico saiu: feed grande demais, o conversor rejeita)
   noticesCsvUrl: "", // link CSV publicado da planilha de "Avisos internos" (colunas: titulo,mensagem) — usado só no comunicado em tela cheia
   agendaCsvUrl: "https://docs.google.com/spreadsheets/d/1w8D2FxR7vJu-AouPmxfdAf9v1O2aki7szMtkEOk25_0/export?format=csv",  // planilha "Painel TV - Agenda (fonte)" (colunas: Data, Hora, Tipo, Responsável, Título, Título do processo/caso/atendimento, Etiquetas, Status)
   agendaPageSize: 5,     // quantos prazos aparecem por vez na lateral
@@ -656,6 +667,7 @@ function renderNewsSlides(){
       <div class="news-text">
         <span class="tag">${item.tag || "notícia"}</span>
         <h2>${item.title}</h2>
+        ${item.lede ? `<p class="lede">${item.lede}</p>` : ""}
         <span class="meta">${item.source || ""}</span>
       </div>
     `;
@@ -679,6 +691,102 @@ function rotateNews(){
   dots[newsIndex].classList.add("active");
 }
 
+function stripHtml(html){
+  return (html || "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, "\"")
+    .replace(/&#8211;/g, "–")
+    .replace(/&#8217;/g, "’")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function extractImageFromHtml(html){
+  const m = (html || "").match(/<img[^>]+src=["']([^"']+)["']/i);
+  return m ? m[1] : "";
+}
+
+const NEWS_CACHE_KEY = "painelfb_news_meta_cache_v1";
+const NEWS_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+
+function loadNewsCache(){
+  try{
+    const raw = localStorage.getItem(NEWS_CACHE_KEY);
+    if(!raw) return {};
+    const obj = JSON.parse(raw);
+    const now = Date.now();
+    const fresh = {};
+    for(const k in obj){ if(obj[k] && (now - obj[k].ts) < NEWS_CACHE_TTL_MS) fresh[k] = obj[k]; }
+    return fresh;
+  } catch(e){ return {}; }
+}
+
+function saveNewsCache(cache){
+  try{ localStorage.setItem(NEWS_CACHE_KEY, JSON.stringify(cache)); } catch(e){ /* localStorage indisponível */ }
+}
+
+async function fetchArticleMeta(url){
+  const res = await withTimeout(fetch(`https://api.microlink.io/?url=${encodeURIComponent(url)}`), 7000);
+  if(!res.ok) throw new Error("microlink http error");
+  const data = await res.json();
+  if(data.status !== "success") throw new Error("microlink status error");
+  return {
+    image: (data.data.image && data.data.image.url) || "",
+    lede: data.data.description || "",
+  };
+}
+
+function applyNewsEnrichment(index, patch){
+  const slides = document.querySelectorAll(".news-slide");
+  const slide = slides[index];
+  if(!slide) return;
+  if(patch.image){
+    const media = slide.querySelector(".news-media");
+    if(media && !media.querySelector("img")){
+      const img = document.createElement("img");
+      img.src = patch.image;
+      img.alt = "";
+      img.onerror = () => img.remove();
+      media.appendChild(img);
+    }
+  }
+  if(patch.lede){
+    const text = slide.querySelector(".news-text");
+    const h2 = text && text.querySelector("h2");
+    if(text && h2 && !text.querySelector(".lede")){
+      const p = document.createElement("p");
+      p.className = "lede";
+      p.textContent = patch.lede;
+      h2.insertAdjacentElement("afterend", p);
+    }
+  }
+}
+
+async function enrichNewsImages(){
+  const cache = loadNewsCache();
+  let changed = false;
+  await Promise.all(newsItems.map(async (item, index) => {
+    if(item.image || !item.link) return;
+    let meta = cache[item.link];
+    if(!meta){
+      try{
+        meta = await fetchArticleMeta(item.link);
+        cache[item.link] = { ...meta, ts: Date.now() };
+        changed = true;
+      } catch(e){
+        return;
+      }
+    }
+    const patch = {};
+    if(meta.image){ item.image = meta.image; patch.image = meta.image; }
+    if(meta.lede && !item.lede){ item.lede = meta.lede; patch.lede = meta.lede; }
+    applyNewsEnrichment(index, patch);
+  }));
+  if(changed) saveNewsCache(cache);
+}
+
 async function loadNews(){
   const sourceLabel = document.getElementById("newsSource");
   sourceLabel.textContent = "";
@@ -691,13 +799,20 @@ async function loadNews(){
         const data = await res.json();
         if(data.status !== "ok" || !data.items || !data.items.length) throw new Error("rss empty");
         const feedTitle = (data.feed && data.feed.title) || "notícia";
-        return data.items.slice(0, 6).map(it => ({
-          title: it.title,
-          tag: feedTitle,
-          source: new Date(it.pubDate).toLocaleDateString("pt-BR"),
-          image: it.thumbnail || (it.enclosure && it.enclosure.link) || "",
-          pubDate: it.pubDate,
-        }));
+        return data.items.slice(0, 6).map(it => {
+          const rawDesc = it.description || it.content || "";
+          const lede = stripHtml(rawDesc);
+          const ledeUsable = lede && lede.length > 12 && lede.toLowerCase() !== (it.title || "").toLowerCase();
+          return {
+            title: it.title,
+            tag: feedTitle,
+            source: new Date(it.pubDate).toLocaleDateString("pt-BR"),
+            link: it.link,
+            image: it.thumbnail || (it.enclosure && it.enclosure.link) || extractImageFromHtml(rawDesc) || "",
+            lede: ledeUsable ? lede.slice(0, 180) : "",
+            pubDate: it.pubDate,
+          };
+        });
       } catch(e){
         return [];
       }
@@ -709,6 +824,7 @@ async function loadNews(){
     newsItems = SAMPLE_NEWS;
   }
   renderNewsSlides();
+  enrichNewsImages();
   if(newsRotateTimer) clearInterval(newsRotateTimer);
   newsRotateTimer = setInterval(rotateNews, CONFIG.newsRotateSeconds * 1000);
 }
