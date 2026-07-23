@@ -399,8 +399,7 @@
   .statusbar{
     display:flex;
     align-items:center;
-    justify-content:flex-end;
-    gap:8px;
+    gap:clamp(10px,1.2vw,18px);
     color:var(--muted);
     font-size:clamp(10px,0.8vw,13px);
     letter-spacing:0.04em;
@@ -410,10 +409,53 @@
     background:var(--red-bright);
     box-shadow:0 0 0 0 rgba(201,70,60,0.6);
     animation:pulse 2.4s ease-in-out infinite;
+    flex:none;
   }
   @keyframes pulse{
     0%,100%{box-shadow:0 0 0 0 rgba(201,70,60,0.5);}
     50%{box-shadow:0 0 0 5px rgba(201,70,60,0);}
+  }
+  #lastUpdated{ flex:none; white-space:nowrap; }
+  .ticker{
+    flex:1;
+    min-width:0;
+    display:flex;
+    align-items:center;
+    gap:clamp(8px,1vw,14px);
+  }
+  .ticker-label{
+    flex:none;
+    font-size:clamp(9px,0.72vw,11px);
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    font-weight:700;
+    color:#fff;
+    background:var(--red);
+    padding:2px 8px;
+  }
+  .ticker-viewport{
+    flex:1;
+    min-width:0;
+    overflow:hidden;
+    position:relative;
+    height:1.6em;
+  }
+  .ticker-track{
+    position:absolute;
+    top:0;
+    left:0;
+    display:flex;
+    white-space:nowrap;
+    width:max-content;
+  }
+  .ticker-copy{
+    padding-right:60px;
+    color:var(--paper);
+    font-variant-numeric:tabular-nums;
+  }
+  @keyframes tickerLTR{
+    from{ transform:translateX(-50%); }
+    to{ transform:translateX(0%); }
   }
 
   /* ---------- comunicado em tela cheia ---------- */
@@ -707,6 +749,12 @@
   </main>
 
   <footer class="statusbar">
+    <div class="ticker">
+      <span class="ticker-label">Prazos por responsável</span>
+      <div class="ticker-viewport">
+        <div class="ticker-track" id="tickerTrack"></div>
+      </div>
+    </div>
     <span id="lastUpdated">atualizando…</span>
     <span class="statusbar-dot"></span>
   </footer>
@@ -787,7 +835,7 @@ const SAMPLE_NEWS = [
 ];
 
 const SAMPLE_NOTICES = [
-  { title:"Reunião de equipe", body:"Toda segunda-feira às 9h, sala de reuniões." },
+  { title:"Reunião de equipe", body:"Toda segunda-feira às 9h, sala de reuniões. Reunião híbrida — parte da equipe participa online." },
 ];
 
 const SAMPLE_AGENDA = [
@@ -1214,12 +1262,44 @@ function updateAgendaWeekCount(){
   label.textContent = count === 1 ? "1 prazo esta semana" : `${count} prazos esta semana`;
 }
 
+function updatePrazosTicker(){
+  const track = document.getElementById("tickerTrack");
+  const counts = {};
+  agendaItems.forEach(a => {
+    if(/audi/i.test(a.tipo || "")) return;
+    const name = (a.responsavel || "").trim();
+    if(!name) return;
+    counts[name] = (counts[name] || 0) + 1;
+  });
+  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+
+  if(!entries.length){
+    track.style.animation = "none";
+    track.innerHTML = "";
+    return;
+  }
+
+  const text = entries
+    .map(([name, count]) => `${name} — ${count} ${count === 1 ? "prazo" : "prazos"}`)
+    .join("     •     ");
+
+  track.innerHTML = `<span class="ticker-copy">${text}</span><span class="ticker-copy">${text}</span>`;
+
+  track.style.animation = "none";
+  void track.offsetWidth; // força recálculo antes de reiniciar a animação
+  const halfWidth = track.scrollWidth / 2;
+  const speedPxPerSec = 60;
+  const duration = Math.max(15, halfWidth / speedPxPerSec);
+  track.style.animation = `tickerLTR ${duration}s linear infinite`;
+}
+
 function renderAgendaPages(){
   const stage = document.getElementById("agendaStage");
   const dots = document.getElementById("agendaDots");
   stage.innerHTML = "";
   dots.innerHTML = "";
   updateAgendaWeekCount();
+  updatePrazosTicker();
 
   if(agendaRotateTimer){ clearInterval(agendaRotateTimer); agendaRotateTimer = null; }
 
