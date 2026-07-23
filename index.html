@@ -338,6 +338,12 @@
     color:#ff8177;
     border-color:rgba(255,129,119,0.5);
   }
+  .a-tipo.audiencia{
+    color:#1a1400;
+    background:#f0b90b;
+    border-color:#f0b90b;
+    font-weight:700;
+  }
   .a-titulo{
     font-size:clamp(14px,1.1vw,18px);
     font-weight:600;
@@ -993,7 +999,7 @@ function renderAgendaPages(){
           <span class="a-date${a.fatal ? " fatal" : ""}">${a.date ? a.date.slice(0, 5) : ""}</span>
           <span class="a-hora">${a.hora && a.hora !== "-" ? a.hora : ""}</span>
           ${(a.badges || []).map(b => `<span class="etq ${b.cls}">${b.label}</span>`).join("")}
-          <span class="a-tipo${a.fatal ? " fatal" : ""}">${a.tipo || "Prazo"}</span>
+          <span class="a-tipo${a.fatal ? " fatal" : ""}${/audi/i.test(a.tipo || "") ? " audiencia" : ""}">${a.tipo || "Prazo"}</span>
         </div>
         <span class="a-titulo">${a.titulo}</span>
         ${a.processo ? `<span class="a-processo">${a.processo}</span>` : ""}
