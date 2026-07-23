@@ -511,7 +511,10 @@
 
     <aside class="side">
       <section class="panel agenda-panel" aria-label="Prazos e audiências">
-        <div class="panel-head"><span class="eyebrow">Prazos &amp; Audiências</span></div>
+        <div class="panel-head">
+          <span class="eyebrow">Prazos &amp; Audiências</span>
+          <span class="panel-sub" id="agendaWeekCount"></span>
+        </div>
         <div class="agenda-stage" id="agendaStage"></div>
         <div class="dots" id="agendaDots"></div>
       </section>
@@ -550,6 +553,7 @@ const CONFIG = {
   agendaRotateSeconds: 9, // troca de página da agenda
   weatherLat: -18.9186,  // latitude da cidade (Uberlândia/MG)
   weatherLon: -48.2772,  // longitude da cidade (Uberlândia/MG)
+  cityLabel: "Uberlândia",  // nome exibido ao lado da temperatura
   refreshMinutes: 10,    // de quanto em quanto tempo busca dados novos
   newsRotateSeconds: 12, // troca de manchete no painel de notícias
   comunicadoIntervalMinutes: 10, // de quanto em quanto tempo o comunicado cobre a tela
@@ -557,14 +561,6 @@ const CONFIG = {
   reloadEveryHours: 1,   // recarrega a página inteira automaticamente (de hora em hora)
 };
 /* ====================================================================== */
-
-const WEATHER_CODES = {
-  0:"céu limpo",1:"poucas nuvens",2:"parcialmente nublado",3:"nublado",
-  45:"neblina",48:"neblina",51:"garoa fraca",53:"garoa",55:"garoa forte",
-  61:"chuva fraca",63:"chuva",65:"chuva forte",71:"neve fraca",73:"neve",
-  75:"neve forte",80:"pancadas de chuva",81:"pancadas de chuva",82:"pancadas fortes",
-  95:"tempestade",96:"tempestade",99:"tempestade"
-};
 
 const SAMPLE_NEWS = [
   { title:"Configure CONFIG.newsRssUrl para exibir manchetes reais aqui", tag:"exemplo", source:"—" },
@@ -631,18 +627,16 @@ setInterval(tickClock, 1000);
 /* ---------------- weather ---------------- */
 async function loadWeather(){
   const chip = document.getElementById("weatherChip");
+  chip.querySelector(".weather-desc").textContent = CONFIG.cityLabel;
   try{
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${CONFIG.weatherLat}&longitude=${CONFIG.weatherLon}&current=temperature_2m,weather_code`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${CONFIG.weatherLat}&longitude=${CONFIG.weatherLon}&current=temperature_2m`;
     const res = await withTimeout(fetch(url), 5000);
     if(!res.ok) throw new Error("weather http error");
     const data = await res.json();
     const temp = Math.round(data.current.temperature_2m);
-    const desc = WEATHER_CODES[data.current.weather_code] || "—";
     chip.querySelector(".weather-temp").textContent = `${temp}°`;
-    chip.querySelector(".weather-desc").textContent = desc;
   } catch(e){
     chip.querySelector(".weather-temp").textContent = "--°";
-    chip.querySelector(".weather-desc").textContent = "clima indisponível";
   }
 }
 
@@ -916,11 +910,36 @@ async function loadAgenda(){
   renderAgendaPages();
 }
 
+function getWeekRange(date){
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  const day = d.getDay();
+  const diffToMonday = day === 0 ? -6 : 1 - day;
+  const monday = new Date(d);
+  monday.setDate(d.getDate() + diffToMonday);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  sunday.setHours(23, 59, 59, 999);
+  return { start: monday.getTime(), end: sunday.getTime() };
+}
+
+function updateAgendaWeekCount(){
+  const { start, end } = getWeekRange(new Date());
+  const count = agendaItems.filter(a => {
+    if(/audi/i.test(a.tipo || "")) return false;
+    const t = parseDateBR(a.date);
+    return t >= start && t <= end;
+  }).length;
+  const label = document.getElementById("agendaWeekCount");
+  label.textContent = count === 1 ? "1 prazo esta semana" : `${count} prazos esta semana`;
+}
+
 function renderAgendaPages(){
   const stage = document.getElementById("agendaStage");
   const dots = document.getElementById("agendaDots");
   stage.innerHTML = "";
   dots.innerHTML = "";
+  updateAgendaWeekCount();
 
   if(agendaRotateTimer){ clearInterval(agendaRotateTimer); agendaRotateTimer = null; }
 
