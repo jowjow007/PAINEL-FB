@@ -761,7 +761,7 @@
 
   <footer class="statusbar">
     <div class="ticker">
-      <span class="ticker-label">Prazos por responsável</span>
+      <span class="ticker-label">Prazos &amp; audiências por responsável</span>
       <div class="ticker-viewport">
         <div class="ticker-track" id="tickerTrack"></div>
       </div>
@@ -1273,7 +1273,6 @@ function updatePrazosTicker(){
   const track = document.getElementById("tickerTrack");
   const counts = {};
   agendaItems.forEach(a => {
-    if(/audi/i.test(a.tipo || "")) return;
     const name = (a.responsavel || "").trim();
     if(!name) return;
     counts[name] = (counts[name] || 0) + 1;
@@ -1287,7 +1286,7 @@ function updatePrazosTicker(){
   }
 
   const text = entries
-    .map(([name, count]) => `<span class="ticker-name"><b>${name}</b> — ${count} ${count === 1 ? "prazo" : "prazos"}</span>`)
+    .map(([name, count]) => `<span class="ticker-name"><b>${name}</b> — ${count} ${count === 1 ? "compromisso" : "compromissos"}</span>`)
     .join("     •     ");
 
   track.innerHTML = `<span class="ticker-copy">${text}</span><span class="ticker-copy">${text}</span>`;
