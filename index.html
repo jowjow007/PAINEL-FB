@@ -271,38 +271,34 @@
     position:relative;
     overflow:hidden;
   }
-  .agenda-page{
-    position:absolute;
-    inset:0;
+  .agenda-scroll{
+    display:flex;
+    flex-direction:column;
+  }
+  .agenda-scroll-copy{
     list-style:none;
     margin:0;
     padding:0;
     display:flex;
     flex-direction:column;
     gap:clamp(10px,1.1vw,16px);
-    opacity:0;
-    transform:translateY(8px);
-    transition:opacity 0.6s ease, transform 0.6s ease;
-    pointer-events:none;
   }
-  .agenda-page.active{
-    opacity:1;
-    transform:translateY(0);
-    pointer-events:auto;
-  }
-  .agenda-page li{
+  .agenda-scroll-copy li{
     display:flex;
     flex-direction:column;
     gap:3px;
     border-bottom:1px solid var(--line);
     padding-bottom:clamp(8px,1vw,14px);
   }
-  .agenda-page li:last-child{ border-bottom:none; }
-  .agenda-page li.audiencia{
+  .agenda-scroll-copy li.audiencia{
     background:rgba(250,204,21,0.12);
     padding:6px 10px clamp(8px,1vw,14px) 10px;
     margin:-6px 0 0 0;
     border-radius:3px;
+  }
+  @keyframes agendaScrollUp{
+    from{ transform:translateY(0%); }
+    to{ transform:translateY(-50%); }
   }
   .agenda-item-head{
     display:flex;
@@ -753,8 +749,9 @@
           <span class="eyebrow">Prazos &amp; Audiências</span>
           <span class="panel-sub" id="agendaWeekCount"></span>
         </div>
-        <div class="agenda-stage" id="agendaStage"></div>
-        <div class="dots" id="agendaDots"></div>
+        <div class="agenda-stage" id="agendaStage">
+          <div class="agenda-scroll" id="agendaScroll"></div>
+        </div>
       </section>
     </aside>
   </main>
@@ -818,13 +815,12 @@ const CONFIG = {
   noticesCsvUrl: "", // link CSV publicado da planilha de "Avisos internos" (colunas: titulo,mensagem) — usado só no comunicado em tela cheia
   agendaCsvUrl: "https://docs.google.com/spreadsheets/d/1w8D2FxR7vJu-AouPmxfdAf9v1O2aki7szMtkEOk25_0/export?format=csv",  // planilha "Painel TV - Agenda (fonte)" (colunas: Data, Hora, Tipo, Responsável, Título, Título do processo/caso/atendimento, Etiquetas, Status)
   comunicadoImagesApiUrl: "https://api.github.com/repos/jowjow007/PAINEL-FB/contents/comunicados", // pasta do repositório onde as imagens de comunicado ficam (Add file → Upload files no GitHub)
-  agendaPageSize: 5,     // quantos prazos aparecem por vez na lateral
-  agendaRotateSeconds: 9, // troca de página da agenda
+  agendaScrollPxPerSec: 22, // velocidade da rolagem de prazos (menor = mais lenta)
   weatherLat: -18.9186,  // latitude da cidade (Uberlândia/MG)
   weatherLon: -48.2772,  // longitude da cidade (Uberlândia/MG)
   cityLabel: "Uberlândia",  // nome exibido ao lado da temperatura
   refreshMinutes: 10,    // de quanto em quanto tempo busca dados novos
-  newsRotateSeconds: 12, // troca de manchete no painel de notícias
+  newsRotateSeconds: 24, // troca de manchete no painel de notícias
   comunicadoIntervalMinutes: 10, // de quanto em quanto tempo o comunicado cobre a tela
   comunicadoDurationSeconds: 30, // por quanto tempo o comunicado fica em tela cheia
   reloadEveryHours: 1,   // recarrega a página inteira automaticamente (de hora em hora)
@@ -1216,8 +1212,6 @@ function etiquetaBadges(str){
 }
 
 let agendaItems = SAMPLE_AGENDA;
-let agendaPageIndex = 0;
-let agendaRotateTimer = null;
 
 async function loadAgenda(){
   let items = agendaItems; // se a busca falhar, mantém os últimos dados reais em vez de cair no exemplo
@@ -1248,7 +1242,7 @@ async function loadAgenda(){
     } catch(e){ /* mantém SAMPLE_AGENDA */ }
   }
   agendaItems = items;
-  renderAgendaPages();
+  renderAgendaScroll();
 }
 
 function getNextDaysRange(date, days){
@@ -1301,65 +1295,49 @@ function updatePrazosTicker(){
   track.style.animation = `tickerRTL ${duration}s linear infinite`;
 }
 
-function renderAgendaPages(){
+function renderAgendaScroll(){
   const stage = document.getElementById("agendaStage");
-  const dots = document.getElementById("agendaDots");
-  stage.innerHTML = "";
-  dots.innerHTML = "";
+  const scroll = document.getElementById("agendaScroll");
   updateAgendaWeekCount();
   updatePrazosTicker();
 
-  if(agendaRotateTimer){ clearInterval(agendaRotateTimer); agendaRotateTimer = null; }
+  scroll.style.animation = "none";
 
   if(!agendaItems.length){
-    stage.innerHTML = `<div class="empty-hint">Nenhum compromisso cadastrado.</div>`;
+    scroll.innerHTML = `<div class="empty-hint">Nenhum compromisso cadastrado.</div>`;
     return;
   }
 
-  const pageSize = CONFIG.agendaPageSize;
-  const pages = [];
-  for(let i = 0; i < agendaItems.length; i += pageSize){
-    pages.push(agendaItems.slice(i, i + pageSize));
+  const itemsHTML = agendaItems.map(a => `
+    <li class="${/audi/i.test(a.tipo || "") ? "audiencia" : ""}">
+      <div class="agenda-item-head">
+        <span class="a-date${a.fatal ? " fatal" : ""}">${a.date ? a.date.slice(0, 5) : ""}</span>
+        <span class="a-hora">${a.hora && a.hora !== "-" ? a.hora : ""}</span>
+        ${(a.badges || []).map(b => `<span class="etq ${b.cls}">${b.label}</span>`).join("")}
+        <span class="a-tipo${a.fatal ? " fatal" : ""}${/audi/i.test(a.tipo || "") ? " audiencia" : ""}">${a.tipo || "Prazo"}</span>
+      </div>
+      <span class="a-titulo">${a.titulo}</span>
+      ${a.processo ? `<span class="a-processo">${a.processo}</span>` : ""}
+      ${a.responsavel ? `<span class="a-resp">${a.responsavel}</span>` : ""}
+    </li>
+  `).join("");
+
+  scroll.innerHTML = `
+    <ul class="agenda-scroll-copy">${itemsHTML}</ul>
+    <ul class="agenda-scroll-copy">${itemsHTML}</ul>
+  `;
+
+  void scroll.offsetHeight; // força recálculo antes de reiniciar a animação
+  const halfHeight = scroll.scrollHeight / 2;
+  const stageHeight = stage.clientHeight;
+
+  if(halfHeight <= stageHeight){
+    // cabe tudo na tela — não precisa rolar
+    return;
   }
 
-  pages.forEach((page, i) => {
-    const ul = document.createElement("ul");
-    ul.className = "agenda-page" + (i === 0 ? " active" : "");
-    ul.innerHTML = page.map(a => `
-      <li class="${/audi/i.test(a.tipo || "") ? "audiencia" : ""}">
-        <div class="agenda-item-head">
-          <span class="a-date${a.fatal ? " fatal" : ""}">${a.date ? a.date.slice(0, 5) : ""}</span>
-          <span class="a-hora">${a.hora && a.hora !== "-" ? a.hora : ""}</span>
-          ${(a.badges || []).map(b => `<span class="etq ${b.cls}">${b.label}</span>`).join("")}
-          <span class="a-tipo${a.fatal ? " fatal" : ""}${/audi/i.test(a.tipo || "") ? " audiencia" : ""}">${a.tipo || "Prazo"}</span>
-        </div>
-        <span class="a-titulo">${a.titulo}</span>
-        ${a.processo ? `<span class="a-processo">${a.processo}</span>` : ""}
-        ${a.responsavel ? `<span class="a-resp">${a.responsavel}</span>` : ""}
-      </li>
-    `).join("");
-    stage.appendChild(ul);
-
-    const dot = document.createElement("span");
-    if(i === 0) dot.className = "active";
-    dots.appendChild(dot);
-  });
-
-  agendaPageIndex = 0;
-  if(pages.length > 1){
-    agendaRotateTimer = setInterval(rotateAgendaPage, CONFIG.agendaRotateSeconds * 1000);
-  }
-}
-
-function rotateAgendaPage(){
-  const pageEls = document.querySelectorAll(".agenda-page");
-  const dotEls = document.querySelectorAll("#agendaDots span");
-  if(!pageEls.length) return;
-  pageEls[agendaPageIndex].classList.remove("active");
-  dotEls[agendaPageIndex].classList.remove("active");
-  agendaPageIndex = (agendaPageIndex + 1) % pageEls.length;
-  pageEls[agendaPageIndex].classList.add("active");
-  dotEls[agendaPageIndex].classList.add("active");
+  const duration = Math.max(20, halfHeight / CONFIG.agendaScrollPxPerSec);
+  scroll.style.animation = `agendaScrollUp ${duration}s linear infinite`;
 }
 
 /* ---------------- comunicados em imagem (pasta do GitHub) ---------------- */
