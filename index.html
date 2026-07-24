@@ -973,9 +973,11 @@ async function loadWeather(){
       })),
     };
   } catch(e){
-    chip.querySelector(".weather-temp").textContent = "--°";
-    chip.querySelector(".weather-desc").textContent = "clima indisponível";
-    forecastData = null;
+    /* mantém a última temperatura/previsão real carregada, se houver */
+    if(!forecastData){
+      chip.querySelector(".weather-temp").textContent = "--°";
+      chip.querySelector(".weather-desc").textContent = "clima indisponível";
+    }
   }
 }
 
@@ -1154,7 +1156,7 @@ async function loadNews(){
     if(!merged.length) throw new Error("todas as fontes de notícias falharam");
     newsItems = merged.slice(0, 12);
   } catch(e){
-    newsItems = SAMPLE_NEWS;
+    /* mantém as últimas notícias reais carregadas, se houver */
   }
   renderNewsSlides();
   enrichNewsImages();
@@ -1166,7 +1168,7 @@ async function loadNews(){
 let noticesData = SAMPLE_NOTICES;
 
 async function loadNotices(){
-  let items = SAMPLE_NOTICES;
+  let items = noticesData; // se a busca falhar, mantém os últimos avisos reais
   if(CONFIG.noticesCsvUrl){
     try{
       const res = await withTimeout(fetch(CONFIG.noticesCsvUrl), 6000);
@@ -1218,7 +1220,7 @@ let agendaPageIndex = 0;
 let agendaRotateTimer = null;
 
 async function loadAgenda(){
-  let items = SAMPLE_AGENDA;
+  let items = agendaItems; // se a busca falhar, mantém os últimos dados reais em vez de cair no exemplo
   if(CONFIG.agendaCsvUrl){
     try{
       const res = await withTimeout(fetch(CONFIG.agendaCsvUrl), 6000);
@@ -1374,7 +1376,7 @@ async function loadComunicadoImages(){
       .sort((a, b) => a.name.localeCompare(b.name))
       .map(f => f.download_url);
   } catch(e){
-    comunicadoImages = [];
+    /* mantém a última lista de imagens carregada, se houver */
   }
 }
 
