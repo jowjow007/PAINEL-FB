@@ -1255,15 +1255,13 @@ function getNextDaysRange(date, days){
 }
 
 function updateAgendaWeekCount(){
-  const { start, end } = getNextDaysRange(new Date(), 7);
+  const { start, end } = getNextDaysRange(new Date(), 8); // hoje + próximos 7 dias
   const count = agendaItems.filter(a => {
-    if(/audi/i.test(a.tipo || "")) return false;
     const t = parseDateBR(a.date);
     return t >= start && t <= end;
   }).length;
   const label = document.getElementById("agendaWeekCount");
-  const weekText = count === 1 ? "1 nos Próximos 7 Dias" : `${count} nos Próximos 7 Dias`;
-  label.textContent = `${agendaItems.length} no total · ${weekText}`;
+  label.textContent = count === 1 ? "1 Prazo Para os Próximos 7 Dias" : `${count} Prazos Para os Próximos 7 Dias`;
 }
 
 function updatePrazosTicker(){
