@@ -1262,8 +1262,8 @@ function updateAgendaWeekCount(){
     return t >= start && t <= end;
   }).length;
   const label = document.getElementById("agendaWeekCount");
-  const weekText = count === 1 ? "1 Prazo Para os Próximos 7 Dias" : `${count} Prazos Para os Próximos 7 Dias`;
-  label.textContent = `${weekText} · ${agendaItems.length} no total`;
+  const weekText = count === 1 ? "1 nos Próximos 7 Dias" : `${count} nos Próximos 7 Dias`;
+  label.textContent = `${agendaItems.length} no total · ${weekText}`;
 }
 
 function updatePrazosTicker(){
