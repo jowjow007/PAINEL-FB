@@ -1167,7 +1167,7 @@ async function loadNotices(){
   let items = noticesData; // se a busca falhar, mantém os últimos avisos reais
   if(CONFIG.noticesCsvUrl){
     try{
-      const res = await withTimeout(fetch(CONFIG.noticesCsvUrl), 6000);
+      const res = await withTimeout(fetch(CONFIG.noticesCsvUrl), 12000);
       if(!res.ok) throw new Error("csv http error");
       const rows = parseCsv(await res.text());
       if(rows.length){
@@ -1217,7 +1217,7 @@ async function loadAgenda(){
   let items = agendaItems; // se a busca falhar, mantém os últimos dados reais em vez de cair no exemplo
   if(CONFIG.agendaCsvUrl){
     try{
-      const res = await withTimeout(fetch(CONFIG.agendaCsvUrl), 6000);
+      const res = await withTimeout(fetch(CONFIG.agendaCsvUrl), 12000);
       if(!res.ok) throw new Error("csv http error");
       const rows = parseCsv(await res.text());
       if(rows.length){
@@ -1262,7 +1262,8 @@ function updateAgendaWeekCount(){
     return t >= start && t <= end;
   }).length;
   const label = document.getElementById("agendaWeekCount");
-  label.textContent = count === 1 ? "1 Prazo Para os Próximos 7 Dias" : `${count} Prazos Para os Próximos 7 Dias`;
+  const weekText = count === 1 ? "1 Prazo Para os Próximos 7 Dias" : `${count} Prazos Para os Próximos 7 Dias`;
+  label.textContent = `${weekText} · ${agendaItems.length} no total`;
 }
 
 function updatePrazosTicker(){
