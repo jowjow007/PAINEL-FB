@@ -76,10 +76,10 @@
     left:0;
     width:75px;
     height:75px;
-    background:linear-gradient(115deg, transparent 35%, rgba(255,255,255,0.95) 49%, rgba(255,255,255,0.95) 53%, transparent 67%);
+    background:linear-gradient(115deg, transparent 40%, rgba(255,255,255,0.35) 49%, rgba(255,255,255,0.35) 53%, transparent 62%);
     background-size:320% 320%;
     animation:ambientShineSweep 4.5s ease-in-out infinite;
-    mix-blend-mode:screen;
+    mix-blend-mode:soft-light;
     -webkit-mask-image:var(--ambient-logo-mask);
     mask-image:var(--ambient-logo-mask);
     -webkit-mask-size:contain;
@@ -1578,8 +1578,8 @@ function startAmbientCluster(elId, { holdMs, fadeMs, startDelayMs }){
   setTimeout(cycle, startDelayMs);
 }
 
-startAmbientCluster("ambientA", { holdMs: 4200, fadeMs: 2600, startDelayMs: 500 });
-startAmbientCluster("ambientB", { holdMs: 4200, fadeMs: 2600, startDelayMs: 6000 });
+startAmbientCluster("ambientA", { holdMs: 0, fadeMs: 3200, startDelayMs: 500 });
+startAmbientCluster("ambientB", { holdMs: 0, fadeMs: 3200, startDelayMs: 6000 });
 </script>
 
 </body>
