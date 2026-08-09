@@ -463,12 +463,33 @@
     gap:clamp(8px,1vw,14px);
   }
   .ticker-label{
+    position:relative;
     flex:none;
+    padding:2px;
+    overflow:hidden;
+  }
+  .ticker-label::before{
+    content:"";
+    position:absolute;
+    top:50%;
+    left:50%;
+    width:300%;
+    height:300%;
+    transform:translate(-50%, -50%) rotate(0deg);
+    background:conic-gradient(from 0deg, transparent 0%, transparent 82%, var(--red-bright) 88%, #ffb3ab 90%, var(--red-bright) 92%, transparent 98%);
+    animation:fatalLedSpin 3.5s linear infinite;
+  }
+  .ticker-label-text{
+    position:relative;
+    z-index:1;
+    display:block;
     font-size:clamp(9px,0.72vw,11px);
     letter-spacing:0.08em;
     text-transform:uppercase;
     font-weight:700;
     color:#fff;
+    background:var(--ink);
+    padding:2px 8px;
   }
   .ticker-viewport{
     flex:1;
@@ -813,7 +834,7 @@
 
   <footer class="statusbar">
     <div class="ticker">
-      <span class="ticker-label">Prazos por responsável</span>
+      <span class="ticker-label"><span class="ticker-label-text">Prazos por responsável</span></span>
       <div class="ticker-viewport">
         <div class="ticker-track" id="tickerTrack"></div>
       </div>
