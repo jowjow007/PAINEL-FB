@@ -393,11 +393,18 @@
 
   /* ---------- faixa de prazos fatais ---------- */
   .fatal-bar{
+    display:flex;
+    align-items:stretch;
+    gap:clamp(8px,1vw,14px);
+    padding:clamp(6px,0.8vh,10px) clamp(14px,1.6vw,28px);
+  }
+  .led-wrap{
     position:relative;
     padding:2px;
     overflow:hidden;
+    display:flex;
   }
-  .fatal-bar::before{
+  .led-wrap::before{
     content:"";
     position:absolute;
     top:50%;
@@ -405,23 +412,30 @@
     width:300%;
     height:300%;
     transform:translate(-50%, -50%) rotate(0deg);
-    transform-origin:center center;
-    background:conic-gradient(from 0deg, transparent 0%, transparent 82%, var(--red-bright) 88%, #ffb3ab 90%, var(--red-bright) 92%, transparent 98%);
     animation:fatalLedSpin 3.5s linear infinite;
   }
   @keyframes fatalLedSpin{
     from{ transform:translate(-50%, -50%) rotate(0deg); }
     to{ transform:translate(-50%, -50%) rotate(360deg); }
   }
-  .fatal-bar-inner{
+  .led-red::before{
+    background:conic-gradient(from 0deg, transparent 0%, transparent 82%, var(--red-bright) 88%, #ffb3ab 90%, var(--red-bright) 92%, transparent 98%);
+  }
+  .led-yellow::before{
+    background:conic-gradient(from 0deg, transparent 0%, transparent 82%, #f0b90b 88%, #fff3c4 90%, #f0b90b 92%, transparent 98%);
+  }
+  .led-wrap-inner{
     position:relative;
     z-index:1;
     display:flex;
     align-items:center;
     gap:clamp(10px,1.2vw,18px);
     background:var(--ink);
-    padding:clamp(6px,0.8vh,10px) clamp(14px,1.6vw,28px);
+    padding:clamp(4px,0.6vh,8px) clamp(12px,1.4vw,22px);
+    min-width:0;
   }
+  .fatal-led-wrap{ flex:1; min-width:0; }
+  .audiencia-led-wrap{ flex:none; }
   .fatal-bar-label{
     flex:none;
     font-size:clamp(11px,0.85vw,14px);
@@ -439,14 +453,14 @@
     gap:6px 12px;
     min-width:0;
   }
+  .title-prefix{ text-transform:none; }
   .audiencia-week{
-    margin-left:auto;
-    flex:none;
     display:flex;
-    align-items:center;
+    align-items:flex-end;
     gap:6px;
   }
   .audiencia-week-label{
+    align-self:center;
     font-size:clamp(9px,0.72vw,11px);
     letter-spacing:0.08em;
     text-transform:uppercase;
@@ -456,33 +470,36 @@
     white-space:nowrap;
   }
   .audiencia-day{
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    line-height:1.2;
+    position:relative;
+    display:inline-block;
+    font-weight:700;
+    font-size:clamp(10px,0.78vw,12px);
     color:#fff;
     background:rgba(240,185,11,0.18);
     border:1px solid rgba(240,185,11,0.5);
     padding:2px 8px;
+    margin-top:14px;
     white-space:nowrap;
   }
   .audiencia-day-num{
+    position:absolute;
+    top:-15px;
+    left:50%;
+    transform:translateX(-50%);
     font-family:var(--font-display);
     font-weight:700;
-    font-size:clamp(13px,1vw,16px);
+    font-size:clamp(11px,0.85vw,13px);
+    color:#f0b90b;
     font-variant-numeric:tabular-nums;
-  }
-  .audiencia-day-info{
-    font-weight:600;
-    font-size:clamp(9px,0.68vw,11px);
   }
   .audiencia-day.today{
     background:#f0b90b;
     border-color:#f0b90b;
-  }
-  .audiencia-day.today .audiencia-day-num,
-  .audiencia-day.today .audiencia-day-info{
     color:#1a1400;
+  }
+  .audiencia-day.today .audiencia-day-num{
+    color:#fff;
+    text-shadow:0 1px 3px rgba(0,0,0,0.5);
   }
 
   /* ---------- status bar ---------- */
@@ -852,10 +869,16 @@
   </header>
 
   <div class="fatal-bar">
-    <div class="fatal-bar-inner">
-      <span class="fatal-bar-label">Prazos Fatais - Hoje</span>
-      <div class="fatal-list" id="fatalList"></div>
-      <div class="audiencia-week" id="audienciaWeek"></div>
+    <div class="led-wrap led-red fatal-led-wrap">
+      <div class="led-wrap-inner">
+        <span class="fatal-bar-label">Prazos Fatais - Hoje</span>
+        <div class="fatal-list" id="fatalList"></div>
+      </div>
+    </div>
+    <div class="led-wrap led-yellow audiencia-led-wrap">
+      <div class="led-wrap-inner">
+        <div class="audiencia-week" id="audienciaWeek"></div>
+      </div>
     </div>
   </div>
 
@@ -1420,6 +1443,20 @@ function updatePrazosTicker(){
   track.style.animation = `tickerRTL ${duration}s linear infinite`;
 }
 
+// títulos conhecidos da equipe — ajuste/complete aqui se faltar alguém
+const KNOWN_TITLES = {
+  "micaela": "Dra.", "thais": "Dra.", "thaís": "Dra.", "yasmin": "Dra.",
+  "danielly": "Dra.", "erika": "Dra.", "jonathan": "Dr.", "andré": "Dr.",
+  "andre": "Dr.",
+};
+
+function titleForFirstName(firstName){
+  const key = firstName.toLowerCase();
+  if(KNOWN_TITLES[key]) return KNOWN_TITLES[key];
+  // sem cadastro: usa uma estimativa simples pela terminação do nome
+  return /a$/i.test(firstName) ? "Dra." : "Dr.";
+}
+
 function updateFatalTicker(){
   const list = document.getElementById("fatalList");
   const todayEnd = new Date();
@@ -1443,7 +1480,7 @@ function updateFatalTicker(){
   }
 
   list.innerHTML = entries
-    .map(([name, count]) => `<span class="ticker-name"><b>${name}</b> — ${count}</span>`)
+    .map(([name, count]) => `<span class="ticker-name"><span class="title-prefix">${titleForFirstName(name)}</span><b>${name}</b> — ${count}</span>`)
     .join("");
 }
 
@@ -1470,10 +1507,7 @@ function updateAudienciaWeek(){
     dayNames.map((name, i) => {
       const dateNum = new Date(monday.getTime() + i * 86400000).getDate();
       const isToday = i === Math.round((today.getTime() - monday.getTime()) / 86400000);
-      return `<span class="audiencia-day${isToday ? " today" : ""}">
-        <span class="audiencia-day-num">${dateNum}</span>
-        <span class="audiencia-day-info">${name}-${counts[i]}</span>
-      </span>`;
+      return `<span class="audiencia-day${isToday ? " today" : ""}"><span class="audiencia-day-num">${dateNum}</span>${name}-${counts[i]}</span>`;
     }).join("");
 }
 
