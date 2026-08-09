@@ -404,12 +404,15 @@
     left:50%;
     width:300%;
     height:300%;
-    margin-top:-150%;
-    margin-left:-150%;
+    transform:translate(-50%, -50%) rotate(0deg);
+    transform-origin:center center;
     background:conic-gradient(from 0deg, transparent 0%, transparent 82%, var(--red-bright) 88%, #ffb3ab 90%, var(--red-bright) 92%, transparent 98%);
     animation:fatalLedSpin 3.5s linear infinite;
   }
-  @keyframes fatalLedSpin{ to{ transform:rotate(360deg); } }
+  @keyframes fatalLedSpin{
+    from{ transform:translate(-50%, -50%) rotate(0deg); }
+    to{ transform:translate(-50%, -50%) rotate(360deg); }
+  }
   .fatal-bar-inner{
     position:relative;
     z-index:1;
