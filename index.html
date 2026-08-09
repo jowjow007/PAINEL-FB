@@ -535,8 +535,6 @@
     font-weight:700;
     font-size:clamp(10px,0.78vw,12px);
     color:#fff;
-    background:rgba(240,185,11,0.18);
-    border:1px solid rgba(240,185,11,0.5);
     padding:2px 8px;
     margin-top:22px;
     white-space:nowrap;
@@ -546,6 +544,7 @@
     top:-23px;
     left:50%;
     transform:translateX(-50%);
+    white-space:nowrap;
     font-family:var(--font-display);
     font-weight:700;
     font-size:clamp(11px,0.85vw,13px);
@@ -554,7 +553,6 @@
   }
   .audiencia-day.today{
     background:#f0b90b;
-    border-color:#f0b90b;
     color:#1a1400;
   }
   .audiencia-day.today .audiencia-day-num{
@@ -1574,7 +1572,7 @@ function updateAudienciaWeek(){
     dayNames.map((name, i) => {
       const dateNum = new Date(monday.getTime() + i * 86400000).getDate();
       const isToday = i === Math.round((today.getTime() - monday.getTime()) / 86400000);
-      return `<span class="audiencia-day${isToday ? " today" : ""}"><span class="audiencia-day-num">${dateNum}</span>${name}-${counts[i]}</span>`;
+      return `<span class="audiencia-day${isToday ? " today" : ""}"><span class="audiencia-day-num">Dia ${dateNum}</span>${name}-${counts[i]}</span>`;
     }).join("");
 }
 
