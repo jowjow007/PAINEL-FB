@@ -456,14 +456,33 @@
     white-space:nowrap;
   }
   .audiencia-day{
-    display:inline-block;
-    font-weight:700;
-    font-size:clamp(10px,0.78vw,12px);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    line-height:1.2;
     color:#fff;
     background:rgba(240,185,11,0.18);
     border:1px solid rgba(240,185,11,0.5);
     padding:2px 8px;
     white-space:nowrap;
+  }
+  .audiencia-day-num{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:clamp(13px,1vw,16px);
+    font-variant-numeric:tabular-nums;
+  }
+  .audiencia-day-info{
+    font-weight:600;
+    font-size:clamp(9px,0.68vw,11px);
+  }
+  .audiencia-day.today{
+    background:#f0b90b;
+    border-color:#f0b90b;
+  }
+  .audiencia-day.today .audiencia-day-num,
+  .audiencia-day.today .audiencia-day-info{
+    color:#1a1400;
   }
 
   /* ---------- status bar ---------- */
@@ -1437,7 +1456,7 @@ function updateAudienciaWeek(){
   const monday = new Date(today);
   monday.setDate(today.getDate() + diffToMonday);
 
-  const dayNames = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+  const dayNames = ["Seg", "Ter", "Qua", "Qui", "Sex"]; // sem sábado/domingo
   const counts = new Array(7).fill(0);
 
   agendaItems.forEach(a => {
@@ -1448,7 +1467,14 @@ function updateAudienciaWeek(){
   });
 
   el.innerHTML = `<span class="audiencia-week-label">Audiências da Semana</span>` +
-    dayNames.map((name, i) => `<span class="audiencia-day">${name}-${counts[i]}</span>`).join("");
+    dayNames.map((name, i) => {
+      const dateNum = new Date(monday.getTime() + i * 86400000).getDate();
+      const isToday = i === Math.round((today.getTime() - monday.getTime()) / 86400000);
+      return `<span class="audiencia-day${isToday ? " today" : ""}">
+        <span class="audiencia-day-num">${dateNum}</span>
+        <span class="audiencia-day-info">${name}-${counts[i]}</span>
+      </span>`;
+    }).join("");
 }
 
 function renderAgendaScroll(){
