@@ -451,6 +451,28 @@
     font-style:italic;
   }
 
+  /* ---------- faixa de prazos fatais ---------- */
+  .fatal-bar{
+    display:flex;
+    align-items:center;
+    gap:clamp(10px,1.2vw,18px);
+    background:rgba(184,54,46,0.14);
+    border-top:1px solid rgba(184,54,46,0.4);
+    border-bottom:1px solid rgba(184,54,46,0.4);
+    padding:clamp(6px,0.8vh,10px) clamp(14px,1.6vw,28px);
+  }
+  .fatal-bar-label{
+    flex:none;
+    font-size:clamp(11px,0.85vw,14px);
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    font-weight:700;
+    color:#fff;
+    background:var(--red);
+    padding:3px 10px;
+  }
+  .fatal-bar .ticker-viewport{ height:auto; }
+
   /* ---------- status bar ---------- */
   .statusbar{
     display:flex;
@@ -807,6 +829,13 @@
       </div>
     </div>
   </header>
+
+  <div class="fatal-bar">
+    <span class="fatal-bar-label">Prazos Fatais — Hoje &amp; Atrasados</span>
+    <div class="ticker-viewport">
+      <div class="ticker-track" id="fatalTickerTrack"></div>
+    </div>
+  </div>
 
   <main class="grid">
     <section class="panel news-panel" aria-label="Notícias">
@@ -1369,11 +1398,48 @@ function updatePrazosTicker(){
   track.style.animation = `tickerRTL ${duration}s linear infinite`;
 }
 
+function updateFatalTicker(){
+  const track = document.getElementById("fatalTickerTrack");
+  const todayEnd = new Date();
+  todayEnd.setHours(23, 59, 59, 999);
+
+  const counts = {};
+  agendaItems.forEach(a => {
+    if(!a.fatal) return;
+    const t = parseDateBR(a.date);
+    if(t > todayEnd.getTime()) return; // só hoje e atrasados, não prazos futuros
+    const name = (a.responsavel || "").trim();
+    if(!name) return;
+    counts[name] = (counts[name] || 0) + 1;
+  });
+  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+
+  if(!entries.length){
+    track.style.animation = "none";
+    track.innerHTML = `<span class="ticker-copy" style="color:var(--muted);">Nenhum prazo fatal em aberto até hoje.</span>`;
+    return;
+  }
+
+  const text = entries
+    .map(([name, count]) => `<span class="ticker-name"><b>${name}</b> — ${count} ${count === 1 ? "prazo fatal" : "prazos fatais"}</span>`)
+    .join("     •     ");
+
+  track.innerHTML = `<span class="ticker-copy">${text}</span><span class="ticker-copy">${text}</span>`;
+
+  track.style.animation = "none";
+  void track.offsetWidth; // força recálculo antes de reiniciar a animação
+  const halfWidth = track.scrollWidth / 2;
+  const speedPxPerSec = 60;
+  const duration = Math.max(15, halfWidth / speedPxPerSec);
+  track.style.animation = `tickerRTL ${duration}s linear infinite`;
+}
+
 function renderAgendaScroll(){
   const stage = document.getElementById("agendaStage");
   const scroll = document.getElementById("agendaScroll");
   updateAgendaWeekCount();
   updatePrazosTicker();
+  updateFatalTicker();
 
   scroll.style.animation = "none";
 
