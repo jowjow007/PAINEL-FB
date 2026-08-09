@@ -439,6 +439,32 @@
     gap:6px 12px;
     min-width:0;
   }
+  .audiencia-week{
+    margin-left:auto;
+    flex:none;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .audiencia-week-label{
+    font-size:clamp(9px,0.72vw,11px);
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    font-weight:700;
+    color:#f0b90b;
+    margin-right:2px;
+    white-space:nowrap;
+  }
+  .audiencia-day{
+    display:inline-block;
+    font-weight:700;
+    font-size:clamp(10px,0.78vw,12px);
+    color:#fff;
+    background:rgba(240,185,11,0.18);
+    border:1px solid rgba(240,185,11,0.5);
+    padding:2px 8px;
+    white-space:nowrap;
+  }
 
   /* ---------- status bar ---------- */
   .statusbar{
@@ -810,6 +836,7 @@
     <div class="fatal-bar-inner">
       <span class="fatal-bar-label">Prazos Fatais - Hoje</span>
       <div class="fatal-list" id="fatalList"></div>
+      <div class="audiencia-week" id="audienciaWeek"></div>
     </div>
   </div>
 
@@ -1401,12 +1428,36 @@ function updateFatalTicker(){
     .join("");
 }
 
+function updateAudienciaWeek(){
+  const el = document.getElementById("audienciaWeek");
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const day = today.getDay(); // 0=dom..6=sáb
+  const diffToMonday = day === 0 ? -6 : 1 - day;
+  const monday = new Date(today);
+  monday.setDate(today.getDate() + diffToMonday);
+
+  const dayNames = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+  const counts = new Array(7).fill(0);
+
+  agendaItems.forEach(a => {
+    if(!/audi/i.test(a.tipo || "")) return;
+    const t = parseDateBR(a.date);
+    const diffDays = Math.round((t - monday.getTime()) / 86400000);
+    if(diffDays >= 0 && diffDays < 7) counts[diffDays]++;
+  });
+
+  el.innerHTML = `<span class="audiencia-week-label">Audiências da Semana</span>` +
+    dayNames.map((name, i) => `<span class="audiencia-day">${name}-${counts[i]}</span>`).join("");
+}
+
 function renderAgendaScroll(){
   const stage = document.getElementById("agendaStage");
   const scroll = document.getElementById("agendaScroll");
   updateAgendaWeekCount();
   updatePrazosTicker();
   updateFatalTicker();
+  updateAudienciaWeek();
 
   scroll.style.animation = "none";
 
