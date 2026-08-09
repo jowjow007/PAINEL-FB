@@ -432,7 +432,13 @@
     background:var(--red);
     padding:3px 10px;
   }
-  .fatal-bar .ticker-viewport{ height:auto; }
+  .fatal-list{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:6px 12px;
+    min-width:0;
+  }
 
   /* ---------- status bar ---------- */
   .statusbar{
@@ -803,9 +809,7 @@
   <div class="fatal-bar">
     <div class="fatal-bar-inner">
       <span class="fatal-bar-label">Prazos Fatais - Hoje</span>
-      <div class="ticker-viewport">
-        <div class="ticker-track" id="fatalTickerTrack"></div>
-      </div>
+      <div class="fatal-list" id="fatalList"></div>
     </div>
   </div>
 
@@ -1371,7 +1375,7 @@ function updatePrazosTicker(){
 }
 
 function updateFatalTicker(){
-  const track = document.getElementById("fatalTickerTrack");
+  const list = document.getElementById("fatalList");
   const todayEnd = new Date();
   todayEnd.setHours(23, 59, 59, 999);
 
@@ -1382,28 +1386,19 @@ function updateFatalTicker(){
     if(t > todayEnd.getTime()) return; // só hoje e atrasados, não prazos futuros
     const name = (a.responsavel || "").trim();
     if(!name) return;
-    counts[name] = (counts[name] || 0) + 1;
+    const firstName = name.split(/\s+/)[0];
+    counts[firstName] = (counts[firstName] || 0) + 1;
   });
   const entries = Object.entries(counts).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
 
   if(!entries.length){
-    track.style.animation = "none";
-    track.innerHTML = `<span class="ticker-copy" style="color:var(--muted);">Nenhum prazo fatal em aberto até hoje.</span>`;
+    list.innerHTML = `<span style="color:var(--muted);">Nenhum prazo fatal em aberto até hoje.</span>`;
     return;
   }
 
-  const text = entries
-    .map(([name, count]) => `<span class="ticker-name"><b>${name}</b> — ${count} ${count === 1 ? "prazo fatal" : "prazos fatais"}</span>`)
-    .join("     •     ");
-
-  track.innerHTML = `<span class="ticker-copy">${text}</span><span class="ticker-copy">${text}</span>`;
-
-  track.style.animation = "none";
-  void track.offsetWidth; // força recálculo antes de reiniciar a animação
-  const halfWidth = track.scrollWidth / 2;
-  const speedPxPerSec = 60;
-  const duration = Math.max(15, halfWidth / speedPxPerSec);
-  track.style.animation = `tickerRTL ${duration}s linear infinite`;
+  list.innerHTML = entries
+    .map(([name, count]) => `<span class="ticker-name"><b>${name}</b> — ${count}</span>`)
+    .join("");
 }
 
 function renderAgendaScroll(){
