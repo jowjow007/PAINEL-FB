@@ -108,7 +108,7 @@
   .topbar-wrap{
     display:flex;
     flex-direction:column;
-    gap:clamp(8px,1vh,14px);
+    gap:clamp(2px,0.3vh,6px);
     border-bottom:1px solid var(--line-strong);
     padding-bottom:clamp(8px,1vh,14px);
   }
@@ -451,6 +451,8 @@
     display:flex;
     align-items:stretch;
     gap:clamp(8px,1vw,14px);
+    border-top:1px solid var(--line-strong);
+    padding-top:clamp(6px,0.8vh,10px);
   }
   .led-wrap{
     position:relative;
@@ -515,11 +517,10 @@
   }
   .audiencia-week{
     display:flex;
-    align-items:flex-end;
+    align-items:center;
     gap:6px;
   }
   .audiencia-week-label{
-    align-self:center;
     font-size:clamp(9px,0.72vw,11px);
     letter-spacing:0.08em;
     text-transform:uppercase;
@@ -592,19 +593,19 @@
   .ticker-label{
     position:relative;
     flex:none;
-    padding:2px;
-    overflow:hidden;
+    padding-bottom:2px;
   }
   .ticker-label::before{
     content:"";
     position:absolute;
-    top:50%;
-    left:50%;
-    width:300%;
-    height:300%;
-    transform:translate(-50%, -50%) rotate(0deg);
-    background:conic-gradient(from 0deg, transparent 0%, transparent 82%, var(--red-bright) 88%, #ffb3ab 90%, var(--red-bright) 92%, transparent 98%);
-    animation:fatalLedSpin 3.5s linear infinite;
+    left:0;
+    right:0;
+    bottom:0;
+    height:2px;
+    background-repeat:no-repeat;
+    background-size:40% 100%;
+    background-image:linear-gradient(90deg, transparent 0%, var(--red-bright) 45%, #ffb3ab 50%, var(--red-bright) 55%, transparent 100%);
+    animation:ledBottomSweep 3.5s linear infinite;
   }
   .ticker-label-text{
     position:relative;
