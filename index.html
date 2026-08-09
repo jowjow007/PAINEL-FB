@@ -454,13 +454,17 @@
     min-width:0;
   }
   .title-prefix{ text-transform:none; }
+  .fatal-list .ticker-name,
+  .fatal-list .ticker-name b{
+    text-transform:none;
+    font-weight:400;
+  }
   .audiencia-week{
     display:flex;
     align-items:flex-end;
     gap:6px;
   }
   .audiencia-week-label{
-    align-self:center;
     font-size:clamp(9px,0.72vw,11px);
     letter-spacing:0.08em;
     text-transform:uppercase;
@@ -1480,7 +1484,7 @@ function updateFatalTicker(){
   }
 
   list.innerHTML = entries
-    .map(([name, count]) => `<span class="ticker-name"><span class="title-prefix">${titleForFirstName(name)}</span><b>${name}</b> — ${count}</span>`)
+    .map(([name, count]) => `<span class="ticker-name"><span class="title-prefix">${titleForFirstName(name)}&nbsp;</span><b>${name}</b> — ${count}</span>`)
     .join("");
 }
 
