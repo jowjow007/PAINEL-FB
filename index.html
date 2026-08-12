@@ -837,6 +837,151 @@
     0%,100%{ transform:translateY(0); }
     50%{ transform:translateY(-6px); }
   }
+  /* ---------- comunicado: alerta de prazos fatais ---------- */
+  .comunicado-alert{
+    display:none;
+    position:absolute;
+    inset:0;
+    overflow:hidden;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    gap:clamp(18px,2.6vh,34px);
+    padding:0 clamp(40px,7vw,140px);
+    background:
+      radial-gradient(ellipse 55% 45% at 78% 18%, rgba(225,74,61,0.35), transparent 60%),
+      radial-gradient(ellipse 55% 45% at 10% 95%, rgba(184,54,46,0.22), transparent 65%),
+      linear-gradient(160deg, #1a1211 0%, #150f0e 55%, #1c0f0d 100%);
+  }
+  .aviso-streaks{
+    position:absolute;
+    inset:0;
+    overflow:hidden;
+    opacity:0.7;
+    pointer-events:none;
+  }
+  .aviso-streak{
+    position:absolute;
+    height:2px;
+    background:linear-gradient(90deg, transparent, var(--red-bright) 45%, #ff6a5c 50%, var(--red-bright) 55%, transparent);
+    transform:rotate(-8deg) translateX(0);
+    filter:blur(0.3px);
+    animation:streakPass 4.5s ease-in-out infinite;
+  }
+  @keyframes streakPass{
+    0%{ transform:rotate(-8deg) translateX(-14vw); opacity:0.15; }
+    50%{ transform:rotate(-8deg) translateX(14vw); opacity:0.9; }
+    100%{ transform:rotate(-8deg) translateX(-14vw); opacity:0.15; }
+  }
+  .aviso-badge-row{
+    position:relative;
+    z-index:1;
+    display:flex;
+    align-items:center;
+    gap:clamp(14px,1.8vw,26px);
+  }
+  .aviso-icon-ring{
+    position:relative;
+    width:clamp(64px,7vw,110px);
+    height:clamp(64px,7vw,110px);
+    flex:none;
+  }
+  .aviso-icon-ring .ring{
+    position:absolute;
+    inset:0;
+    border-radius:50%;
+    border:3px solid rgba(225,74,61,0.55);
+    animation:ringPulse 1.8s ease-out infinite;
+  }
+  .aviso-icon-ring .ring.r2{
+    inset:-14px;
+    border-color:rgba(225,74,61,0.22);
+    animation-delay:0.5s;
+  }
+  @keyframes ringPulse{
+    0%{ transform:scale(0.85); opacity:0.9; }
+    70%,100%{ transform:scale(1.18); opacity:0; }
+  }
+  .aviso-icon-ring .disc{
+    position:absolute;
+    inset:8px;
+    border-radius:50%;
+    background:linear-gradient(160deg, var(--red-bright), var(--red) 70%);
+    animation:discBlink 1.8s ease-in-out infinite;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .aviso-icon-ring svg{ width:52%; height:52%; }
+  @keyframes discBlink{
+    0%,100%{ box-shadow:0 0 40px 6px rgba(225,74,61,0.55), inset 0 -6px 14px rgba(0,0,0,0.35); }
+    50%{ box-shadow:0 0 64px 14px rgba(225,74,61,0.9), inset 0 -6px 14px rgba(0,0,0,0.35); }
+  }
+  .aviso-eyebrow{
+    text-align:left;
+    font-size:clamp(14px,1.3vw,22px);
+    font-weight:700;
+    letter-spacing:0.35em;
+    text-transform:uppercase;
+    color:#ff6a5c;
+  }
+  .aviso-title{
+    position:relative;
+    z-index:1;
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:clamp(38px,5.2vw,86px);
+    line-height:1.08;
+    color:#fff;
+    text-shadow:0 0 40px rgba(225,74,61,0.45);
+    max-width:1300px;
+    text-wrap:balance;
+  }
+  .aviso-title .accent{ color:#ff6a5c; }
+  .aviso-lede{
+    position:relative;
+    z-index:1;
+    font-size:clamp(16px,1.7vw,30px);
+    line-height:1.5;
+    color:var(--paper);
+    max-width:56ch;
+  }
+  .aviso-lede b{ color:#fff; font-weight:700; }
+  .aviso-cta{
+    position:relative;
+    z-index:1;
+    display:inline-flex;
+    align-items:center;
+    gap:clamp(10px,1.1vw,16px);
+    background:rgba(225,74,61,0.14);
+    border:1px solid rgba(225,74,61,0.5);
+    padding:clamp(12px,1.6vh,20px) clamp(22px,3vw,40px);
+    border-radius:6px;
+    animation:ctaBlink 1.8s ease-in-out infinite;
+  }
+  .aviso-cta svg{ width:clamp(20px,2vw,32px); height:clamp(20px,2vw,32px); flex:none; }
+  .aviso-cta span{
+    font-weight:700;
+    font-size:clamp(15px,1.5vw,26px);
+    color:#fff;
+  }
+  @keyframes ctaBlink{
+    0%,100%{
+      background:rgba(225,74,61,0.14);
+      border-color:rgba(225,74,61,0.5);
+      box-shadow:0 0 0 0 rgba(225,74,61,0);
+    }
+    50%{
+      background:rgba(225,74,61,0.32);
+      border-color:rgba(225,74,61,0.95);
+      box-shadow:0 0 42px 8px rgba(225,74,61,0.55);
+    }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .aviso-streak, .aviso-icon-ring .ring, .aviso-icon-ring .disc, .aviso-cta{ animation:none; }
+  }
+
   .comunicado-progress{
     position:absolute;
     bottom:clamp(30px,4vh,56px);
@@ -971,6 +1116,39 @@
         </div>
       </div>
       <div class="cw-forecast" id="cwForecast"></div>
+    </div>
+  </div>
+  <div class="comunicado-alert" id="comunicadoAlert">
+    <div class="aviso-streaks">
+      <div class="aviso-streak" style="top:14%; left:-20%; width:50%; animation-delay:0s;"></div>
+      <div class="aviso-streak" style="top:24%; left:-14%; width:30%; opacity:0.6; animation-delay:0.6s;"></div>
+      <div class="aviso-streak" style="top:36%; left:-26%; width:38%; opacity:0.4; animation-delay:1.3s;"></div>
+      <div class="aviso-streak" style="top:70%; left:64%; width:42%; animation-delay:0.9s;"></div>
+      <div class="aviso-streak" style="top:80%; left:76%; width:24%; opacity:0.5; animation-delay:0.3s;"></div>
+      <div class="aviso-streak" style="top:90%; left:68%; width:32%; opacity:0.35; animation-delay:1.6s;"></div>
+    </div>
+    <div class="aviso-badge-row">
+      <div class="aviso-icon-ring">
+        <div class="ring"></div>
+        <div class="ring r2"></div>
+        <div class="disc">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 3L22.5 21H1.5L12 3Z" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" fill="none"/>
+            <line x1="12" y1="9.5" x2="12" y2="14.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+            <circle cx="12" cy="17.4" r="1.15" fill="#fff"/>
+          </svg>
+        </div>
+      </div>
+      <div class="aviso-eyebrow">Alerta de prazos</div>
+    </div>
+    <h1 class="aviso-title" id="avisoAlertTitle">Prazos fatais em <span class="accent">volume crítico</span></h1>
+    <p class="aviso-lede" id="avisoAlertLede"></p>
+    <div class="aviso-cta">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="9.5" stroke="#fff" stroke-width="1.6"/>
+        <path d="M12 7v5.5l3.6 2.1" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>Confira seus prazos fatais até o fim do expediente</span>
     </div>
   </div>
   <div class="comunicado-progress"><span id="comunicadoBar"></span></div>
@@ -1482,6 +1660,8 @@ function titleForFirstName(firstName){
   return /a$/i.test(firstName) ? "Dra." : "Dr.";
 }
 
+let fatalPrazosTotal = 0;
+
 function updateFatalTicker(){
   const list = document.getElementById("fatalList");
   const todayEnd = new Date();
@@ -1498,6 +1678,7 @@ function updateFatalTicker(){
     counts[firstName] = (counts[firstName] || 0) + 1;
   });
   const entries = Object.entries(counts).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  fatalPrazosTotal = entries.reduce((sum, [, count]) => sum + count, 0);
 
   if(!entries.length){
     list.innerHTML = `<span style="color:var(--muted);">Nenhum prazo fatal em aberto até hoje.</span>`;
@@ -1611,7 +1792,8 @@ function rebuildComunicadoQueue(){
     .map(n => ({ type: "text", title: n.title, body: n.body }));
   const imageItems = comunicadoImages.map(url => ({ type: "image", url }));
   const weatherItems = forecastData ? [{ type: "weather" }] : [];
-  comunicadoQueue = [...imageItems, ...weatherItems, ...textItems];
+  const alertItems = fatalPrazosTotal > 0 ? [{ type: "alert" }] : [];
+  comunicadoQueue = [...imageItems, ...weatherItems, ...alertItems, ...textItems];
 }
 
 function fillWeatherComunicado(){
@@ -1652,10 +1834,12 @@ function showComunicado(){
   const card = document.getElementById("comunicadoCard");
   const photo = document.getElementById("comunicadoPhoto");
   const weather = document.getElementById("comunicadoWeather");
+  const alert = document.getElementById("comunicadoAlert");
 
   card.style.display = "none";
   photo.style.display = "none";
   weather.style.display = "none";
+  alert.style.display = "none";
 
   if(item.type === "image"){
     photo.style.display = "block";
@@ -1663,6 +1847,11 @@ function showComunicado(){
   } else if(item.type === "weather"){
     weather.style.display = "flex";
     fillWeatherComunicado();
+  } else if(item.type === "alert"){
+    alert.style.display = "flex";
+    const plural = fatalPrazosTotal === 1 ? "prazo fatal" : "prazos fatais";
+    document.getElementById("avisoAlertLede").innerHTML =
+      `São <b>${fatalPrazosTotal} ${plural} em aberto</b> — número acima do normal. Pedimos que <b>todos revisem agora os seus prazos</b> no sistema e priorizem o que vence hoje.`;
   } else {
     card.style.display = "flex";
     document.getElementById("comunicadoTitle").textContent = item.title;
