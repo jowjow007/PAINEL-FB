@@ -442,9 +442,15 @@
   }
   .fatal-led-wrap{ flex:1; min-width:0; }
   .audiencia-led-wrap{ flex:none; }
+  .fatal-week{
+    display:flex;
+    align-items:center;
+    gap:clamp(10px,1.2vw,18px);
+    min-width:0;
+    flex:1;
+  }
   .fatal-bar-label{
     flex:none;
-    align-self:center;
     font-size:clamp(9px,0.72vw,11px);
     letter-spacing:0.1em;
     text-transform:uppercase;
@@ -885,8 +891,10 @@
     <div class="fatal-bar">
       <div class="led-wrap led-red fatal-led-wrap">
         <div class="led-wrap-inner">
-          <span class="fatal-bar-label">Prazos Fatais - Hoje</span>
-          <div class="fatal-list" id="fatalList"></div>
+          <div class="fatal-week">
+            <span class="fatal-bar-label">Prazos Fatais - Hoje</span>
+            <div class="fatal-list" id="fatalList"></div>
+          </div>
         </div>
       </div>
       <div class="led-wrap led-yellow audiencia-led-wrap">
