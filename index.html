@@ -1622,7 +1622,8 @@ function updatePrazosTicker(){
   agendaItems.forEach(a => {
     const name = (a.responsavel || "").trim();
     if(!name) return;
-    counts[name] = (counts[name] || 0) + 1;
+    const key = shortName(name);
+    counts[key] = (counts[key] || 0) + 1;
   });
   const entries = Object.entries(counts).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
 
@@ -1660,6 +1661,15 @@ function titleForFirstName(firstName){
   return /a$/i.test(firstName) ? "Dra." : "Dr.";
 }
 
+// primeiro nome + inicial do primeiro sobrenome (ex.: "Thais Marquez" -> "Thais M.")
+// evita misturar pessoas diferentes que compartilham o primeiro nome
+function shortName(fullName){
+  const parts = fullName.trim().split(/\s+/);
+  const first = parts[0] || "";
+  const surnameInitial = parts[1] ? parts[1][0].toUpperCase() + "." : "";
+  return surnameInitial ? `${first} ${surnameInitial}` : first;
+}
+
 let fatalPrazosTotal = 0;
 
 function updateFatalTicker(){
@@ -1674,8 +1684,8 @@ function updateFatalTicker(){
     if(t > todayEnd.getTime()) return; // só hoje e atrasados, não prazos futuros
     const name = (a.responsavel || "").trim();
     if(!name) return;
-    const firstName = name.split(/\s+/)[0];
-    counts[firstName] = (counts[firstName] || 0) + 1;
+    const key = shortName(name);
+    counts[key] = (counts[key] || 0) + 1;
   });
   const entries = Object.entries(counts).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
   fatalPrazosTotal = entries.reduce((sum, [, count]) => sum + count, 0);
@@ -1686,7 +1696,7 @@ function updateFatalTicker(){
   }
 
   list.innerHTML = entries
-    .map(([name, count]) => `<span class="ticker-name"><span class="title-prefix">${titleForFirstName(name)}&nbsp;</span><b>${name}</b>-${count}</span>`)
+    .map(([name, count]) => `<span class="ticker-name"><span class="title-prefix">${titleForFirstName(name.split(/\s+/)[0])}&nbsp;</span><b>${name}</b>-${count}</span>`)
     .join("");
 }
 
@@ -1742,7 +1752,7 @@ function renderAgendaScroll(){
       </div>
       <span class="a-titulo">${a.titulo}</span>
       ${a.processo ? `<span class="a-processo">${a.processo}</span>` : ""}
-      ${a.responsavel ? `<span class="a-resp">${a.responsavel}</span>` : ""}
+      ${a.responsavel ? `<span class="a-resp">${shortName(a.responsavel)}</span>` : ""}
     </li>
   `).join("");
 
