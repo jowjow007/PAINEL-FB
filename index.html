@@ -1165,7 +1165,7 @@ const CONFIG = {
     "https://www.jota.info/feed",
   ], // fontes de notícias (RSS) — todas entram no mesmo carrossel, misturadas por data (Âmbito Jurídico saiu: feed grande demais, o conversor rejeita)
   noticesCsvUrl: "", // link CSV publicado da planilha de "Avisos internos" (colunas: titulo,mensagem) — usado só no comunicado em tela cheia
-  agendaCsvUrl: "https://docs.google.com/spreadsheets/d/1w8D2FxR7vJu-AouPmxfdAf9v1O2aki7szMtkEOk25_0/export?format=csv",  // planilha "Painel TV - Agenda (fonte)" (colunas: Data, Hora, Tipo, Responsável, Título, Título do processo/caso/atendimento, Etiquetas, Status)
+  agendaCsvUrl: "agenda.csv",  // agora vem direto da Agenda Astrea do Portal (astreaDiario), via scripts/painel-tv-sync — não depende mais da planilha do Google Sheets (colunas: Data, Hora, Tipo, Responsável, Título, Título do processo/caso/atendimento, Etiquetas, Status)
   comunicadoImagesApiUrl: "https://api.github.com/repos/jowjow007/PAINEL-FB/contents/comunicados", // pasta do repositório onde as imagens de comunicado ficam (Add file → Upload files no GitHub)
   agendaScrollPxPerSec: 22, // velocidade da rolagem de prazos (menor = mais lenta)
   weatherLat: -18.9186,  // latitude da cidade (Uberlândia/MG)
@@ -1569,7 +1569,10 @@ async function loadAgenda(){
   let items = agendaItems; // se a busca falhar, mantém os últimos dados reais em vez de cair no exemplo
   if(CONFIG.agendaCsvUrl){
     try{
-      const res = await withTimeout(fetch(CONFIG.agendaCsvUrl), 12000);
+      // cache-bust: arquivo é servido estático pelo GitHub Pages, sem isso o navegador
+      // poderia continuar mostrando uma cópia em cache entre as atualizações do agenda.csv
+      const url = CONFIG.agendaCsvUrl + (CONFIG.agendaCsvUrl.includes("?") ? "&" : "?") + "t=" + Date.now();
+      const res = await withTimeout(fetch(url), 12000);
       if(!res.ok) throw new Error("csv http error");
       const rows = parseCsv(await res.text());
       if(rows.length){
