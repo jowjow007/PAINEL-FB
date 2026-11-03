@@ -30,7 +30,7 @@ Se a agenda do painel parecer desatualizada ou incompleta:
    Astrea (ou no computador do escritório), não neste painel. Veja a memória
    "Robô Astrea no PC do escritório".
 2. Se a sub-aba do Portal estiver certa mas o painel não, confira o log em
-   `portal-fb/scripts/painel-tv-sync/log-diario.txt` e se a tarefa agendada
+   `portal-fb/scripts/painel-tv-sync/logs/sincronizar-AAAA-MM-DD.txt` e se a tarefa agendada
    `PainelTV_SincronizarAgendaAstrea` está rodando (veja o `LEIA-ME.md` da
    pasta do script).
 3. Dá para forçar uma sincronização na hora sem esperar 08h/16h, rodando
