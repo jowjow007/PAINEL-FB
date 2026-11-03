@@ -1165,7 +1165,12 @@ const CONFIG = {
     "https://www.jota.info/feed",
   ], // fontes de notícias (RSS) — todas entram no mesmo carrossel, misturadas por data (Âmbito Jurídico saiu: feed grande demais, o conversor rejeita)
   noticesCsvUrl: "", // link CSV publicado da planilha de "Avisos internos" (colunas: titulo,mensagem) — usado só no comunicado em tela cheia
-  agendaCsvUrl: "agenda.csv",  // agora vem direto da Agenda Astrea do Portal (astreaDiario), via scripts/painel-tv-sync — não depende mais da planilha do Google Sheets (colunas: Data, Hora, Tipo, Responsável, Título, Título do processo/caso/atendimento, Etiquetas, Status)
+  // Agora vem direto da Agenda Astrea do Portal (astreaDiario), via scripts/painel-tv-sync — não depende mais
+  // da planilha do Google Sheets. Lido da branch "agenda-live" (raw.githubusercontent.com, não de "main"):
+  // essa branch só tem 1 commit, sempre reescrito, para não acumular dados reais de clientes/processos no
+  // histórico do repositório público (colunas: Data, Hora, Tipo, Responsável, Título, Título do
+  // processo/caso/atendimento, Etiquetas, Status).
+  agendaCsvUrl: "https://raw.githubusercontent.com/jowjow007/PAINEL-FB/agenda-live/agenda.csv",
   comunicadoImagesApiUrl: "https://api.github.com/repos/jowjow007/PAINEL-FB/contents/comunicados", // pasta do repositório onde as imagens de comunicado ficam (Add file → Upload files no GitHub)
   agendaScrollPxPerSec: 22, // velocidade da rolagem de prazos (menor = mais lenta)
   weatherLat: -18.9186,  // latitude da cidade (Uberlândia/MG)

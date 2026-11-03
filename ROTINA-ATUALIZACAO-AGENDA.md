@@ -6,9 +6,18 @@ direto da sub-aba **Agenda — Astrea** de Números do Escritório no Portal
 de uma planilha do Google Sheets.
 
 Um script (`portal-fb/scripts/painel-tv-sync/sincronizar_agenda.py`), agendado
-para rodar **todo dia às 08h e às 16h**, lê esse snapshot e regrava `agenda.csv`
-aqui no repositório automaticamente (commit + push). O painel busca esse
-arquivo a cada 10 minutos e também recarrega a página inteira a cada hora.
+para rodar **todo dia às 08h e às 16h**, lê esse snapshot e publica `agenda.csv`
+numa branch separada deste repositório, **`agenda-live`** (não em `main`) — o
+painel busca o arquivo direto de lá. O painel busca esse arquivo a cada 10
+minutos e também recarrega a página inteira a cada hora.
+
+A branch `agenda-live` é tratada como um "estado atual", não um histórico:
+como este repositório é público (exigência do GitHub Pages), ela nunca
+acumula mais de 1 commit — cada sincronização reescreve esse commit, para não
+deixar nomes de clientes/processos guardados para sempre no histórico do Git.
+Isso não muda nada do que já era visível antes (a planilha do Google Sheets
+publicada na web também era pública para quem tivesse o link), só evita que
+o dado de hoje fique arquivado permanentemente.
 
 ## Não precisa fazer nada manualmente
 
