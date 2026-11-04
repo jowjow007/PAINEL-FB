@@ -104,6 +104,21 @@
     font-size:clamp(12px,1vw,16px);
     text-transform:capitalize;
   }
+  .clock-col{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-end;
+    gap:2px;
+  }
+  .agenda-sync{
+    font-size:clamp(10px,0.8vw,13px);
+    color:var(--muted);
+    opacity:0.85;
+  }
+  .agenda-sync.erro{
+    color:var(--red-bright);
+    opacity:1;
+  }
   .weather{
     display:flex;
     align-items:center;
@@ -1028,9 +1043,12 @@
           <span class="weather-desc">carregando…</span>
         </div>
       </div>
-      <div class="clock">
-        <span class="time" id="clockTime">--:--</span>
-        <span class="date" id="clockDate">-- de -- de ----</span>
+      <div class="clock-col">
+        <div class="clock">
+          <span class="time" id="clockTime">--:--</span>
+          <span class="date" id="clockDate">-- de -- de ----</span>
+        </div>
+        <span class="agenda-sync" id="agendaSync">Agenda: atualizando...</span>
       </div>
     </div>
     </div>
@@ -1171,6 +1189,7 @@ const CONFIG = {
   // histórico do repositório público (colunas: Data, Hora, Tipo, Responsável, Título, Título do
   // processo/caso/atendimento, Etiquetas, Status).
   agendaCsvUrl: "https://raw.githubusercontent.com/jowjow007/PAINEL-FB/agenda-live/agenda.csv",
+  agendaMetaUrl: "https://raw.githubusercontent.com/jowjow007/PAINEL-FB/agenda-live/atualizado-em.txt", // horário (gravado pelo painel-tv-sync) em que os dados foram confirmados pela última vez, mostrado no relógio
   comunicadoImagesApiUrl: "https://api.github.com/repos/jowjow007/PAINEL-FB/contents/comunicados", // pasta do repositório onde as imagens de comunicado ficam (Add file → Upload files no GitHub)
   agendaScrollPxPerSec: 22, // velocidade da rolagem de prazos (menor = mais lenta)
   weatherLat: -18.9186,  // latitude da cidade (Uberlândia/MG)
@@ -1570,6 +1589,27 @@ function etiquetaBadges(str){
 
 let agendaItems = SAMPLE_AGENDA;
 
+// Mostra para qualquer um que esteja olhando a TV quando os dados da agenda foram
+// confirmados pela última vez (gravado pelo painel-tv-sync, não a hora em que o
+// navegador buscou o arquivo — isso mostraria sempre "agora" e não diria nada sobre
+// se os dados estão realmente frescos ou presos num erro de dias atrás).
+async function atualizarAgendaSyncLabel(){
+  const el = document.getElementById("agendaSync");
+  if(!el || !CONFIG.agendaMetaUrl) return;
+  try{
+    const url = CONFIG.agendaMetaUrl + "?t=" + Date.now();
+    const res = await withTimeout(fetch(url), 8000);
+    if(!res.ok) throw new Error("meta http error");
+    const texto = (await res.text()).trim();
+    if(!texto) throw new Error("meta vazio");
+    el.textContent = "Agenda atualizada em " + texto;
+    el.classList.remove("erro");
+  } catch(e){
+    el.textContent = "Agenda: não foi possível confirmar a última atualização";
+    el.classList.add("erro");
+  }
+}
+
 async function loadAgenda(){
   let items = agendaItems; // se a busca falhar, mantém os últimos dados reais em vez de cair no exemplo
   if(CONFIG.agendaCsvUrl){
@@ -1599,10 +1639,11 @@ async function loadAgenda(){
             return parseDateBR(a.date) - parseDateBR(b.date);
           });
       }
-    } catch(e){ /* mantém SAMPLE_AGENDA */ }
+    } catch(e){ /* mantém dados anteriores */ }
   }
   agendaItems = items;
   renderAgendaScroll();
+  atualizarAgendaSyncLabel();
 }
 
 function getNextDaysRange(date, days){
